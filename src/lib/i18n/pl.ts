@@ -20,7 +20,7 @@ export const pl = {
 		points: (min: number) => [
 			'Plik służy tylko do przygotowania wydruku i nie jest nigdzie archiwizowany.',
 			`Drukarka trzyma wydruk zabezpieczony PIN-em najwyżej ${min} minut, potem sama go kasuje.`,
-			'Nie zapisujemy nazw plików, ich treści ani PIN-ów. Zostaje tylko liczba kartek, do dziennego limitu.'
+			'Nie zapisujemy nazw plików, ich treści ani PIN-ów.'
 		]
 	},
 	secureNote: 'Wydruk czeka w drukarce zabezpieczony PIN-em. Nikt inny go nie odbierze.',
