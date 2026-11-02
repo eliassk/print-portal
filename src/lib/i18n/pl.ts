@@ -18,7 +18,7 @@ export const pl = {
 	privacy: {
 		title: 'Twoje pliki nie są przechowywane',
 		points: (min: number) => [
-			'Plik trafia prosto do drukarki i jest od razu usuwany z serwera. Niewysłany plik znika po 30 minutach.',
+			'Plik służy tylko do przygotowania wydruku i nie jest nigdzie archiwizowany. Po wysłaniu do drukarki od razu go usuwamy.',
 			`Drukarka trzyma wydruk zabezpieczony PIN-em najwyżej ${min} minut, potem sama go kasuje.`,
 			'Nie zapisujemy nazw plików, ich treści ani PIN-ów. Zostaje tylko liczba kartek, do dziennego limitu.'
 		]
