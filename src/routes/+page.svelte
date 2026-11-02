@@ -75,7 +75,7 @@
 	$effect(() => {
 		const body = JSON.stringify(effective);
 		const page = sheet;
-		if (screen !== 'opts' || !draft || !rangeOk) return;
+		if ((screen !== 'opts' && screen !== 'sum') || !draft || !rangeOk) return;
 		clearTimeout(debounce);
 		debounce = setTimeout(() => renderPreview(body, page), 250);
 	});
@@ -178,6 +178,31 @@
 	const back: Partial<Record<Screen, Screen>> = { file: 'start', opts: 'file', sum: 'opts' };
 	const order: Screen[] = ['start', 'file', 'opts', 'sum', 'pin'];
 </script>
+
+{#snippet previewBlock()}
+		<div class="prev" class:busy={previewBusy}>
+			{#if preview}
+				<div class="paper-img">
+					<img
+						src={preview.image}
+						alt={pl.previewPage(sheet, preview.faces)}
+						onload={(e) => {
+							const img = e.currentTarget as HTMLImageElement;
+							landscape = img.naturalWidth > img.naturalHeight;
+						}}
+					/>
+					<span class="safe" style="inset: {edge}" aria-hidden="true"></span>
+				</div>
+			{:else}<div class="ph"></div>{/if}
+		</div>
+		{#if preview && preview.faces > 1}
+			<div class="pager">
+				<button aria-label={pl.prevPage} disabled={sheet <= 1} onclick={() => sheet--}><Icon name="left" size={18} /></button>
+				<span>{pl.previewPage(sheet, preview.faces)}</span>
+				<button aria-label={pl.nextPage} disabled={sheet >= preview.faces} onclick={() => sheet++}><Icon name="right" size={18} /></button>
+			</div>
+		{/if}
+{/snippet}
 
 {#snippet trayNote()}
 	{#if printer && !printer.online}
@@ -288,28 +313,7 @@
 							<span class="fname"><b>{fileName}</b>{#if fileName !== fileKey}<small>{fileKey}</small>{/if}</span>
 							<button class="link" onclick={() => (screen = 'file')}>{pl.changeFile}</button>
 						</div>
-						<div class="prev" class:busy={previewBusy}>
-							{#if preview}
-								<div class="paper-img">
-									<img
-										src={preview.image}
-										alt={pl.previewPage(sheet, preview.faces)}
-										onload={(e) => {
-											const img = e.currentTarget as HTMLImageElement;
-											landscape = img.naturalWidth > img.naturalHeight;
-										}}
-									/>
-									<span class="safe" style="inset: {edge}" aria-hidden="true"></span>
-								</div>
-							{:else}<div class="ph"></div>{/if}
-						</div>
-						{#if preview && preview.faces > 1}
-							<div class="pager">
-								<button aria-label={pl.prevPage} disabled={sheet <= 1} onclick={() => sheet--}><Icon name="left" size={18} /></button>
-								<span>{pl.previewPage(sheet, preview.faces)}</span>
-								<button aria-label={pl.nextPage} disabled={sheet >= preview.faces} onclick={() => sheet++}><Icon name="right" size={18} /></button>
-							</div>
-						{/if}
+						{@render previewBlock()}
 						<p class="hint">{pl.previewNote}</p>
 						{#if preview?.lowRes}<p class="note warn"><Icon name="alert" size={18} />{pl.lowRes}</p>{/if}
 					</section>
@@ -402,23 +406,26 @@
 				</div>
 			</div>
 		{:else if screen === 'sum'}
-			<div class="narrow">
-				<div class="hero"><h1>{pl.summary}</h1></div>
-				<section class="card sum">
-					<div><span>{pl.file}</span><b>{fileName}</b></div>
-					{#if kind === 'doc'}<div><span>{pl.range}</span><b>{effective.range || pl.allPages}</b></div>{/if}
-					<div><span>{pl.copies}</span><b>{effective.copies}</b></div>
-					<div><span>{pl.size}</span><b>{effective.size}</b></div>
-					<div><span>{pl.color}</span><b>{pl.colorOptions[effective.color]}</b></div>
-					<div><span>{pl.print}</span><b>{pl.duplexSummary[effective.duplex]}</b></div>
-					<div><span>{pl.nup[kind]}</span><b>{effective.nup}</b></div>
-					<div><span>{pl.paper}</span><b>{pl.papers[effective.paper].name} · {pl.gsm(PAPER_GSM[effective.paper])}</b></div>
-					{#if tray}<div><span>{pl.tray}</span><b>{pl.trays[tray.key]}</b></div>{/if}
-					<div class="tot"><span>{pl.total}</span><b>{pl.sheets(preview?.sheets ?? 0)}</b></div>
-				</section>
-				{@render trayNote()}
-				<button class="btn" disabled={busy} onclick={send}><Icon name="lock" size={18} />{busy ? pl.sending : pl.send}</button>
-				<p class="hint center">{pl.waitsForPin}</p>
+			<div class="hero"><h1>{pl.summary}</h1></div>
+			<div class="split sum-split">
+				<section class="card">{@render previewBlock()}</section>
+				<div class="narrow">
+					<section class="card sum">
+						<div><span>{pl.file}</span><b>{fileName}</b></div>
+						{#if kind === 'doc'}<div><span>{pl.range}</span><b>{effective.range || pl.allPages}</b></div>{/if}
+						<div><span>{pl.copies}</span><b>{effective.copies}</b></div>
+						<div><span>{pl.size}</span><b>{effective.size}</b></div>
+						<div><span>{pl.color}</span><b>{pl.colorOptions[effective.color]}</b></div>
+						<div><span>{pl.print}</span><b>{pl.duplexSummary[effective.duplex]}</b></div>
+						<div><span>{pl.nup[kind]}</span><b>{effective.nup}</b></div>
+						<div><span>{pl.paper}</span><b>{pl.papers[effective.paper].name} · {pl.gsm(PAPER_GSM[effective.paper])}</b></div>
+						{#if tray}<div><span>{pl.tray}</span><b>{pl.trays[tray.key]}</b></div>{/if}
+						<div class="tot"><span>{pl.total}</span><b>{pl.sheets(preview?.sheets ?? 0)}</b></div>
+					</section>
+					{@render trayNote()}
+					<button class="btn" disabled={busy} onclick={send}><Icon name="lock" size={18} />{busy ? pl.sending : pl.send}</button>
+					<p class="hint center">{pl.waitsForPin}</p>
+				</div>
 			</div>
 		{:else if screen === 'pin' && result}
 			<div class="narrow">
@@ -1180,6 +1187,12 @@
 		}
 		main.screen-opts {
 			max-width: 1120px;
+		}
+		main.screen-sum {
+			max-width: 1000px;
+		}
+		.sum-split {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		}
 		.split {
 			grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
