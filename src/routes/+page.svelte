@@ -1089,9 +1089,10 @@
 		background: var(--ok-soft);
 		color: var(--ok);
 	}
+	/* Stacked on phones so the PIN stays on one line; side by side from tablet width. */
 	.codes {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		grid-template-columns: minmax(0, 1fr);
 		gap: 12px;
 		width: 100%;
 	}
@@ -1105,6 +1106,7 @@
 	.pin {
 		font: 700 2.4rem/1.1 var(--mono);
 		letter-spacing: 0.12em;
+		white-space: nowrap;
 	}
 	.timer {
 		font: 600 0.95rem var(--mono);
@@ -1171,6 +1173,9 @@
 		}
 		.drop {
 			padding: 72px 24px;
+		}
+		.codes {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		}
 	}
 
