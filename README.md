@@ -75,3 +75,26 @@ Stage 0 checks all of them.
 ## Printer status
 
 `src/lib/server/status.ts` reads trays, toner and low-paper warnings over IPP (port 631, read-only, cached 30 s). The parser is tested against a recorded C224e response in `src/lib/server/fixtures/`.
+
+## HTTPS on a local domain
+
+The portal stays reachable only inside the building: the name resolves only in the local DNS,
+and no port is forwarded on the router. The certificate comes from Let's Encrypt through a
+Cloudflare DNS record (DNS-01), so nothing has to be open from the internet. Caddy renews it
+on its own, about 30 days before it expires.
+
+1. **Cloudflare token.** My Profile → API Tokens → Create Token → "Edit zone DNS" template.
+   Zone Resources: Include → Specific zone → `konfero.pl`. Copy the token.
+2. **No public record.** Do not add an A record for the portal name in Cloudflare. Caddy only
+   adds and removes a temporary `_acme-challenge` TXT record.
+3. **Local DNS on the router.** Add a host entry `druk.konfero.pl → <LAN_IP>`.
+4. **`.env`:** set `PORTAL_DOMAIN`, `CF_API_TOKEN`, `ACME_EMAIL`. When 443 is taken (UISP on
+   mediacontrol-vm), set `HTTPS_PORT=8443` and `HTTPS_PORT_SUFFIX=:8443`, and set
+   `PORTAL_URL=https://druk.konfero.pl:8443` for the QR card.
+5. **Start:**
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+```
+
+Check the certificate: `docker compose -f docker-compose.yml -f docker-compose.https.yml logs caddy | grep -i certificate`.

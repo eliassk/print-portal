@@ -1,0 +1,20 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$PORTAL_DOMAIN} {
+	tls {
+		dns cloudflare {$CF_API_TOKEN}
+		# Ask Cloudflare's resolvers directly; the local DNS answers the name with the LAN address.
+		resolvers 1.1.1.1 1.0.0.1
+	}
+
+	# Second guard. The first is that the name only resolves inside the building and no port is
+	# forwarded. Behind Docker's port proxy every client may look private, so this MUST NOT be
+	# the only protection.
+	@outside not remote_ip private_ranges
+	respond @outside "Portal druku działa tylko w sieci budynku." 403
+
+	encode zstd gzip
+	reverse_proxy print-portal:3000
+}

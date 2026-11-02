@@ -1,0 +1,26 @@
+# HTTPS in front of the portal. Use together with docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+services:
+  print-portal:
+    # Only Caddy talks to the app; the plain HTTP port is closed.
+    ports: !reset []
+    environment:
+      # SvelteKit checks form posts against this origin; it MUST match the address people open.
+      ORIGIN: "https://${PORTAL_DOMAIN}${HTTPS_PORT_SUFFIX:-}"
+  caddy:
+    build: ./caddy
+    restart: unless-stopped
+    depends_on: [print-portal]
+    environment:
+      PORTAL_DOMAIN: ${PORTAL_DOMAIN}
+      CF_API_TOKEN: ${CF_API_TOKEN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      # LAN address only. Port 80 is not needed: certificates come through DNS.
+      - "${LAN_IP:-127.0.0.1}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+volumes:
+  caddy-data:
+  caddy-config:
