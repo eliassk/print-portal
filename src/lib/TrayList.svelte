@@ -21,13 +21,14 @@
 		gap: 10px;
 	}
 	.compact {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 		gap: 8px;
 	}
 	.tray {
 		background: var(--sunk);
-		border-radius: 10px;
-		padding: 10px 12px;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		padding: 12px 14px;
 		min-width: 0;
 	}
 	.head {
@@ -63,7 +64,7 @@
 		padding: 2px 7px;
 		border-radius: 99px;
 		white-space: nowrap;
-		background: var(--sunk);
+		background: var(--ok-soft);
 		color: var(--ok);
 	}
 	.pill.low {

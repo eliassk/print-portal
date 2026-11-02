@@ -8,6 +8,14 @@ const plural = (n: number, one: string, few: string, many: string) =>
 export const pl = {
 	appName: 'Portal druku',
 	back: 'Wstecz',
+	stepNames: ['Rodzaj', 'Plik', 'Ustawienia', 'Podsumowanie', 'Odbiór'],
+	tagline: 'Wyślij plik z telefonu lub komputera i odbierz wydruk przy drukarce.',
+	dropHint: 'albo przeciągnij tutaj',
+	printerLabel: 'Drukarka',
+	printerOk: 'Gotowa',
+	printerOff: 'Niedostępna',
+	changeFile: 'Zmień plik',
+	secureNote: 'Wydruk czeka w drukarce zabezpieczony PIN-em. Nikt inny go nie odbierze.',
 	startQuestion: 'Co drukujesz?',
 	presets: {
 		doc: { name: 'Dokument', hint: 'PDF, Word, Excel · czarno-biały · dwustronnie' },

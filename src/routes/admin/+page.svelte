@@ -79,9 +79,9 @@
 
 <style>
 	main {
-		max-width: 760px;
+		max-width: 1040px;
 		margin: 0 auto;
-		padding: 24px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+		padding: 32px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
 		display: grid;
 		gap: 16px;
 	}
@@ -91,8 +91,20 @@
 		align-items: center;
 	}
 	h1 {
-		font-size: 1.5rem;
+		font-size: 1.8rem;
+		letter-spacing: -0.02em;
 		margin: 0;
+	}
+	@media (min-width: 900px) {
+		main {
+			grid-template-columns: 1fr 1fr;
+			align-items: start;
+		}
+		header,
+		main > section:nth-of-type(2),
+		main > p {
+			grid-column: 1 / -1;
+		}
 	}
 	h2 {
 		font-size: 1.1rem;
@@ -105,8 +117,9 @@
 	.card {
 		background: var(--surface);
 		border: 1px solid var(--line);
-		border-radius: 12px;
-		padding: 16px;
+		border-radius: var(--radius);
+		box-shadow: var(--shadow);
+		padding: 20px;
 		min-width: 0;
 	}
 	.login {
@@ -116,8 +129,8 @@
 	}
 	input[type='password'],
 	input[type='number'] {
-		border: 1px solid var(--line);
-		border-radius: 8px;
+		border: 1px solid var(--line-strong);
+		border-radius: 10px;
 		padding: 8px 10px;
 		background: var(--surface);
 	}
@@ -137,7 +150,7 @@
 	}
 	.btn {
 		border: 0;
-		border-radius: 10px;
+		border-radius: 12px;
 		padding: 10px 16px;
 		font-weight: 600;
 		background: var(--accent);
