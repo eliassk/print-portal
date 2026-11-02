@@ -4,6 +4,7 @@
 	import Icon from '$lib/Icon.svelte';
 	import TrayList from '$lib/TrayList.svelte';
 	import { MARGINS, NUP_CHOICES, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
+	import { SIZES } from '$lib/layout';
 	import { parseRange } from '$lib/pages';
 	import type { PrinterStatus } from '$lib/status';
 	import { trayFor } from '$lib/trayFor';
@@ -47,7 +48,7 @@
 	const fileKey = $derived(kind === 'doc' ? pl.pages(items) : pl.photos(items));
 	// The printer's 5 mm edge as a share of the sheet, to draw the printable area on the preview.
 	const edge = $derived.by(() => {
-		const [w, h] = effective.size === 'A4' ? [210, 297] : [297, 420];
+		const [w, h] = SIZES[effective.size];
 		const [x, y] = landscape ? [h, w] : [w, h];
 		return `${(5 / y) * 100}% ${(5 / x) * 100}%`;
 	});
@@ -342,7 +343,7 @@
 					<section class="card grid2">
 						<div class="field">
 							<span class="lbl">{pl.size}</span>
-							{@render seg(['A4', 'A3'] as const, opts.size, (v) => (opts.size = v), (v) => v)}
+							{@render seg(['A5', 'A4', 'A3'] as const, opts.size, (v) => (opts.size = v), (v) => v)}
 						</div>
 						<div class="field">
 							<span class="lbl">{pl.color}</span>
@@ -376,7 +377,7 @@
 						<div class="field wide">
 							<span class="lbl">{pl.duplex}</span>
 							{@render seg(['off', 'long', 'short'] as const, effective.duplex, (v) => (opts.duplex = v), (v) => pl.duplexOptions[v], (v) => v !== 'off' && usesBypass(opts.paper))}
-							{#if usesBypass(opts.paper)}<p class="hint">{pl.duplexThick}</p>{/if}
+							<p class="hint">{usesBypass(opts.paper) ? pl.duplexThick : pl.duplexHint[effective.duplex]}</p>
 						</div>
 					</section>
 
@@ -409,7 +410,7 @@
 					<div><span>{pl.copies}</span><b>{effective.copies}</b></div>
 					<div><span>{pl.size}</span><b>{effective.size}</b></div>
 					<div><span>{pl.color}</span><b>{pl.colorOptions[effective.color]}</b></div>
-					<div><span>{pl.print}</span><b>{pl.duplexOptions[effective.duplex]}</b></div>
+					<div><span>{pl.print}</span><b>{pl.duplexSummary[effective.duplex]}</b></div>
 					<div><span>{pl.nup[kind]}</span><b>{effective.nup}</b></div>
 					<div><span>{pl.paper}</span><b>{pl.papers[effective.paper].name} · {pl.gsm(PAPER_GSM[effective.paper])}</b></div>
 					{#if tray}<div><span>{pl.tray}</span><b>{pl.trays[tray.key]}</b></div>{/if}
@@ -897,22 +898,25 @@
 		gap: 16px;
 		align-items: end;
 	}
+	/* One row of equal buttons, full width, so no option ever wraps onto a second line. */
 	.seg {
-		display: inline-flex;
-		flex-wrap: wrap;
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: minmax(0, 1fr);
 		gap: 4px;
 		padding: 4px;
 		border-radius: 12px;
 		background: var(--sunk);
 		border: 1px solid var(--line);
-		justify-self: start;
 	}
 	.seg button {
 		border: 0;
 		background: transparent;
 		border-radius: 9px;
-		padding: 8px 14px;
-		min-width: 44px;
+		padding: 9px 6px;
+		min-height: 40px;
+		line-height: 1.2;
+		text-align: center;
 		font-size: 15px;
 		color: var(--muted);
 		cursor: pointer;

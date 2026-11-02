@@ -19,5 +19,6 @@ describe('trayFor', () => {
 	it('picks the fullest A4 cassette', () => expect(trayFor({ paper: 'plain', size: 'A4' }, s)?.key).toBe('tray1'));
 	it('picks the A3 cassette', () => expect(trayFor({ paper: 'plain', size: 'A3' }, s)?.key).toBe('tray2'));
 	it('sends thick paper to the bypass tray', () => expect(trayFor({ paper: 'thick2', size: 'A4' }, s)?.key).toBe('bypass'));
+	it('uses the bypass tray when only it holds the size', () => expect(trayFor({ paper: 'plain', size: 'A5' }, s)?.key).toBe('bypass'));
 	it('knows nothing without status', () => expect(trayFor({ paper: 'plain', size: 'A4' }, null)).toBeNull());
 });

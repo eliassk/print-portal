@@ -23,7 +23,7 @@ export const PrintOptions = z.object({
 	copies: z.number().int().min(1).max(20),
 	/** Empty means all pages. Documents only. */
 	range: z.string().max(60),
-	size: z.enum(['A4', 'A3']),
+	size: z.enum(['A5', 'A4', 'A3']),
 	color: z.enum(['color', 'mono']),
 	duplex: z.enum(['off', 'long', 'short']),
 	/** Pages or photos per sheet. Documents allow 1, 2, 4; photos 1, 2, 4, 9. */

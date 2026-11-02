@@ -9,6 +9,11 @@ describe('sheetLayout', () => {
 		expect(s.cells[0].w).toBeCloseTo(200 * MM);
 		expect(s.cells[0].h).toBeCloseTo(287 * MM);
 	});
+	it('lays out A5 with the same 5 mm edge', () => {
+		const s = sheetLayout('A5', 1);
+		expect(s.width).toBeCloseTo(148 * MM);
+		expect(s.cells[0].w).toBeCloseTo(138 * MM);
+	});
 	it('turns 2-up to landscape with two cells side by side', () => {
 		const s = sheetLayout('A4', 2);
 		expect(s.width).toBeGreaterThan(s.height);

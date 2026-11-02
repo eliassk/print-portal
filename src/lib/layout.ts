@@ -4,7 +4,8 @@ export const MM = 72 / 25.4;
 export const MARGIN_MM = 5;
 const GAP_MM = 3;
 
-const SIZES = { A4: [210, 297], A3: [297, 420] } as const;
+/** Portrait width and height in mm. */
+export const SIZES = { A5: [148, 210], A4: [210, 297], A3: [297, 420] } as const;
 
 export interface Rect {
 	x: number;

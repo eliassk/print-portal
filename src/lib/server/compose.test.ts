@@ -24,6 +24,11 @@ describe('compose', () => {
 		expect(r.faces).toBe(2);
 	});
 
+	it('scales A4 pages down onto A5', async () => {
+		const r = await compose({ kind: 'doc', pdf: await pdfWith(1) }, { ...PRESETS.doc, size: 'A5' });
+		expect(Math.round((await PDFDocument.load(r.pdf)).getPage(0).getWidth())).toBe(420);
+	});
+
 	it('puts four pages on one sheet', async () => {
 		const r = await compose({ kind: 'doc', pdf: await pdfWith(6) }, { ...PRESETS.doc, nup: 4 });
 		expect(r.faces).toBe(2);

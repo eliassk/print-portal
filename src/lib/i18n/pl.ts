@@ -57,13 +57,19 @@ export const pl = {
 	colorOptions: { mono: 'Czarno-biały', color: 'Kolor' },
 	colorOff: 'Druk w kolorze jest teraz wyłączony.',
 	duplex: 'Druk dwustronny',
-	duplexOptions: { off: 'Jednostronnie', long: 'Jak książka', short: 'Jak kalendarz' },
+	duplexOptions: { off: 'Nie', long: 'Książka', short: 'Kalendarz' },
+	duplexHint: {
+		off: 'Drukujemy tylko na jednej stronie kartki.',
+		long: 'Obie strony, kartkę przewraca się na bok jak w książce.',
+		short: 'Obie strony, kartkę przewraca się do góry jak w kalendarzu.'
+	},
+	duplexSummary: { off: 'Jednostronnie', long: 'Dwustronnie, jak książka', short: 'Dwustronnie, jak kalendarz' },
 	duplexThick: 'Na grubym papierze drukujemy tylko jednostronnie.',
 	nup: { doc: 'Stron na kartce', photo: 'Zdjęć na kartce' },
 	fit: 'Zdjęcie na kartce',
 	margin: 'Margines',
 	marginHint: 'Biały brzeg wokół wydruku. Drukarka nie drukuje bliżej niż 5 mm od krawędzi.',
-	marginLabel: (mm: number) => (mm === 5 ? 'Najmniejszy · 5 mm' : `${mm} mm`),
+	marginLabel: (mm: number) => `${mm} mm`,
 	orientation: 'Orientacja kartki',
 	orientationOptions: { auto: 'Automatycznie', portrait: 'Pionowo', landscape: 'Poziomo' },
 	orientationHint: {

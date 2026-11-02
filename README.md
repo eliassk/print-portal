@@ -67,6 +67,7 @@ Not yet verified on the printer:
 - PDF after `ENTER LANGUAGE = PDF` (the stored test jobs were PCL XL from the Windows driver).
 - `BINDING = TOP` for short-edge duplex.
 - `DRIVERCOLORSELECT = GRAYSCALE` and `PLANESINUSE = 1` for black and white.
+- `PAPER = A5` (A4 is from the capture).
 - `MEDIAWEIGHT = THICK1 … THICK4` and `MEDIASOURCE = MANUALFEED` for thick paper. Capture one Windows print per paper type (print to file) and fix the `WEIGHT` table in `pjl.ts`.
 
 Stage 0 checks all of them.

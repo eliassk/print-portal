@@ -52,6 +52,9 @@ describe('buildSecureJob', () => {
 		expect(out).toContain('MEDIAWEIGHT = THICK2');
 	});
 
+	it('sends A5 as the paper size', () =>
+		expect(text(buildSecureJob({ id: '1', pin: '1234', options: { ...opts, size: 'A5' } }, pdf))).toContain('@PJL SET PAPER = A5'));
+
 	it('refuses IDs and PINs that are not digits', () => {
 		expect(() => buildSecureJob({ id: '1"\r\n@PJL', pin: '1234', options: opts }, pdf)).toThrow();
 		expect(() => buildSecureJob({ id: '1', pin: '12', options: opts }, pdf)).toThrow();

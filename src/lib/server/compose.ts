@@ -1,6 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
-import { LOW_DPI, dpi, place, sheetLayout, type Rect } from '../layout.ts';
+import { LOW_DPI, MM, SIZES, dpi, place, sheetLayout, type Rect } from '../layout.ts';
 import type { PrintOptions } from '../options.ts';
 import { parseRange } from '../pages.ts';
 
@@ -24,8 +24,8 @@ async function composeDoc(input: Uint8Array, o: PrintOptions): Promise<Composed>
 	const pages = parseRange(o.range, source.getPageCount());
 	if (!pages) throw new RangeError('range');
 	const out = await PDFDocument.create();
-	if (o.nup === 1 && o.margin === 5) {
-		// One page per sheet at the printer's own edge: copy pages untouched.
+	if (o.nup === 1 && o.margin === 5 && pages.every((n) => fitsSize(source.getPage(n - 1), o.size))) {
+		// Pages already on the chosen size at the printer's own edge: copy them untouched.
 		for (const p of await out.copyPages(source, pages.map((n) => n - 1))) out.addPage(p);
 	} else {
 		for (let i = 0; i < pages.length; i += o.nup) {
@@ -45,6 +45,13 @@ async function composeDoc(input: Uint8Array, o: PrintOptions): Promise<Composed>
 		}
 	}
 	return { pdf: await out.save(), items: pages.length, faces: out.getPageCount(), lowRes: false };
+}
+
+/** True when a page is the chosen paper size in either orientation, within 2%. */
+function fitsSize(page: { getWidth(): number; getHeight(): number }, size: PrintOptions['size']): boolean {
+	const [a, b] = [page.getWidth(), page.getHeight()].sort((x, y) => x - y);
+	const [w, h] = SIZES[size].map((v) => v * MM);
+	return Math.abs(a - w) / w < 0.02 && Math.abs(b - h) / h < 0.02;
 }
 
 async function composePhotos(images: Uint8Array[], o: PrintOptions): Promise<Composed> {
