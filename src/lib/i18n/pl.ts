@@ -29,8 +29,6 @@ export const pl = {
 		doc: { name: 'Dokument', hint: 'PDF, Word, Excel · czarno-biały · dwustronnie' },
 		photo: { name: 'Zdjęcie', hint: 'JPG, PNG · kolor · dopasuj do strony' }
 	},
-	lastUsed: 'Ostatnio',
-	remembered: 'Ustawienia zapamiętane na tym telefonie.',
 	pickFile: { doc: 'Wybierz plik', photo: 'Wybierz zdjęcia' },
 	takePhoto: 'Zrób zdjęcie',
 	fileTypes: {

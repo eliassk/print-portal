@@ -237,7 +237,6 @@
 					</button>
 				{/each}
 			</div>
-			{#if saved[kind]}<p class="note info"><Icon name="check" size={18} />{pl.lastUsed}: <b>{pl.presets[kind].name}</b>. {pl.remembered}</p>{/if}
 			<section class="card privacy">
 				<div class="ptitle"><span class="ic sm"><Icon name="shield" size={20} /></span><h2>{pl.privacy.title}</h2></div>
 				<ul>{#each pl.privacy.points(printer?.pinTtlMin ?? 60) as p (p)}<li>{p}</li>{/each}</ul>
