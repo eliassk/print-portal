@@ -1,0 +1,64 @@
+# Portal druku
+
+LAN-only web app for the bizhub C224e. Upload a document or photos on a phone, check the preview, pick paper, get an ID and PIN, release the job at the printer (Secure Print). The UI is in Polish.
+
+- `/` print page
+- `/admin` printer status, settings, recent jobs (needs `ADMIN_PASSWORD` and `ADMIN_SECRET`)
+- `/karta` A5 card with the QR code, to print and hang next to the printer
+
+Plan and stages: [PLAN.md](PLAN.md).
+
+## Run locally
+
+```bash
+pnpm install
+cp .env.example .env
+pnpm dev
+```
+
+The page is at `http://<this machine>:5180`. Sending needs the printer on port 9100.
+
+Local tools: Ghostscript (`gs`) and Poppler (`pdftoppm`) are required. LibreOffice (`soffice`) is optional; without it Word and Excel files are refused with a clear message.
+
+To try it without the real printer, point it at a closed port: `PRINTER_HOST=127.0.0.1 PRINTER_PORT=9190 pnpm dev`.
+
+## Test
+
+```bash
+pnpm test
+pnpm check
+```
+
+## Stage 0: prove release at the panel
+
+Stand at the printer, then send a test page:
+
+```bash
+pnpm send-secure scripts/test-page.pdf --id 203 --pin 2030
+```
+
+Release it: **Skrzynka → System → Wydruk bezpieczny**, ID `203`, PIN `2030`.
+`--dry` writes `secure-job.prn` without sending. Other flags: `--mono`, `--duplex long|short`, `--a3`, `--copies 2`, `--paper thick2`.
+
+## Deploy on the Ubuntu VM
+
+```bash
+cp .env.example .env   # set LAN_IP to the VM's LAN address
+docker compose up -d --build
+```
+
+## How a job is built
+
+`src/lib/server/pjl.ts` writes a PJL header (`HOLD=ON`, `HOLDTYPE=PRIVATE`, `KMJOBID`, `HOLDKEY`, `KMCOETYPE=0`) and appends the PDF. It is sent raw to port 9100.
+
+Not yet verified on the printer:
+- PDF after `ENTER LANGUAGE = PDF` (the stored test jobs were PCL XL from the Windows driver).
+- `BINDING = TOP` for short-edge duplex.
+- `DRIVERCOLORSELECT = GRAYSCALE` and `PLANESINUSE = 1` for black and white.
+- `MEDIAWEIGHT = THICK1 … THICK4` and `MEDIASOURCE = MANUALFEED` for thick paper. Capture one Windows print per paper type (print to file) and fix the `WEIGHT` table in `pjl.ts`.
+
+Stage 0 checks all of them.
+
+## Printer status
+
+`src/lib/server/status.ts` reads trays, toner and low-paper warnings over IPP (port 631, read-only, cached 30 s). The parser is tested against a recorded C224e response in `src/lib/server/fixtures/`.
