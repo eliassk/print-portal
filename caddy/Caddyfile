@@ -10,8 +10,7 @@
 	}
 
 	# Second guard. The first is that the name only resolves inside the building and no port is
-	# forwarded. Behind Docker's port proxy every client may look private, so this MUST NOT be
-	# the only protection.
+	# forwarded. On the ipvlan address Caddy sees real client addresses, so this check is exact.
 	@outside not remote_ip private_ranges
 	respond @outside "Portal druku działa tylko w sieci budynku." 403
 

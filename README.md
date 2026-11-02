@@ -87,10 +87,13 @@ on its own, about 30 days before it expires.
    Zone Resources: Include → Specific zone → `konfero.pl`. Copy the token.
 2. **No public record.** Do not add an A record for the portal name in Cloudflare. Caddy only
    adds and removes a temporary `_acme-challenge` TXT record.
-3. **Local DNS on the router.** Add a host entry `drukarka.konfero.pl → <LAN_IP>`.
-4. **`.env`:** set `PORTAL_DOMAIN`, `CF_API_TOKEN`, `ACME_EMAIL`. When 443 is taken (UISP on
-   mediacontrol-vm), set `HTTPS_PORT=8443` and `HTTPS_PORT_SUFFIX=:8443`, and set
-   `PORTAL_URL=https://drukarka.konfero.pl:8443` for the QR card.
+3. **Local DNS on the router.** Add a host entry `drukarka.konfero.pl → <CADDY_IP>`.
+4. **`.env`:** set `PORTAL_DOMAIN`, `CF_API_TOKEN`, `ACME_EMAIL`, and the ipvlan values:
+   `CADDY_IP` (a free LAN address outside DHCP), `LAN_PARENT_IF`, `LAN_SUBNET`, `LAN_GATEWAY`.
+   Caddy gets that address as its own, so 80 and 443 are free there even when the VM's ports
+   are taken. Set `PORTAL_URL=https://drukarka.konfero.pl` for the QR card. The router's local
+   DNS entry MUST point to `CADDY_IP`, not to the VM. The VM itself cannot reach `CADDY_IP`
+   (an ipvlan rule); test from another machine.
 5. **Start:**
 
 ```bash
