@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	return {
 		state: 'in' as const,
 		now,
-		status: await printerStatus(config.printerHost),
+		status: await printerStatus(config.printerHost, config.printerIppPort),
 		settings: db.settings(),
 		today: db.totals(startOfDay(now)),
 		recent: db.recent(30)

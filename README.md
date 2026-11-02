@@ -20,7 +20,19 @@ The page is at `http://<this machine>:5180`. Sending needs the printer on port 9
 
 Local tools: Ghostscript (`gs`) and Poppler (`pdftoppm`) are required. LibreOffice (`soffice`) is optional; without it Word and Excel files are refused with a clear message.
 
-To try it without the real printer, point it at a closed port: `PRINTER_HOST=127.0.0.1 PRINTER_PORT=9190 pnpm dev`.
+## Try it with a mock printer
+
+Two terminals:
+
+```bash
+pnpm mock-printer
+```
+
+```bash
+pnpm dev:mock
+```
+
+Open `http://localhost:5180`. Admin is at `/admin` with password `test`. Every job lands in `data/mock-jobs/` as the raw `.prn` and the `.pdf` the real printer would get, and the mock prints its ID and PIN. Tray and toner status come from a response recorded from the real C224e.
 
 ## Test
 

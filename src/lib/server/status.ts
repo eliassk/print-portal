@@ -59,11 +59,11 @@ export function toStatus(attrs: Record<string, Value[]>, now = Date.now()): Prin
 let cache: PrinterStatus | null = null;
 
 /** Printer status, cached for 30 s. Never throws: an unreachable printer is reported offline. */
-export async function printerStatus(host: string): Promise<PrinterStatus> {
+export async function printerStatus(host: string, port = 631): Promise<PrinterStatus> {
 	if (cache && Date.now() - cache.checkedAt < 30_000) return cache;
 	try {
 		const uri = `ipp://${host}/ipp`;
-		const res = await fetch(`http://${host}:631/ipp`, {
+		const res = await fetch(`http://${host}:${port}/ipp`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/ipp' },
 			body: new Uint8Array(getPrinterAttributesRequest(uri, ATTRS)),

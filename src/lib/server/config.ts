@@ -9,6 +9,7 @@ function num(name: string, fallback: number): number {
 export const config = {
 	printerHost: env.PRINTER_HOST ?? '10.134.13.10',
 	printerPort: num('PRINTER_PORT', 9100),
+	printerIppPort: num('PRINTER_IPP_PORT', 631),
 	pinTtlMin: num('PIN_TTL_MIN', 60),
 	maxUploadBytes: num('MAX_UPLOAD_MB', 50) * 1024 * 1024,
 	maxPhotos: num('MAX_PHOTOS', 36),
