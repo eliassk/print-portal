@@ -80,7 +80,7 @@ Done when a phone photo prints on thick paper from the bypass tray exactly as pr
 1. May guests on the guest Wi-Fi print?
 2. Anonymous with a daily cap, or a light login?
 3. Page limits per job and per day; colour for everyone?
-4. Portal address on local DNS, e.g. `druk.lan`.
+4. Portal address on local DNS, e.g. `drukarka.konfero.pl`.
 
 ## Later (not scheduled)
 

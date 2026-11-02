@@ -19,5 +19,5 @@ export const config = {
 	/** Signs admin cookies. MUST be long and random in production. */
 	adminSecret: env.ADMIN_SECRET ?? '',
 	/** Address printed in the QR code on the card next to the printer. */
-	portalUrl: env.PORTAL_URL ?? 'http://druk.lan'
+	portalUrl: env.PORTAL_URL ?? 'https://drukarka.konfero.pl'
 };
