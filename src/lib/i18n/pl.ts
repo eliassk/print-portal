@@ -26,7 +26,7 @@ export const pl = {
 	secureNote: 'Wydruk czeka w drukarce zabezpieczony PIN-em. Nikt inny go nie odbierze.',
 	startQuestion: 'Co drukujesz?',
 	presets: {
-		doc: { name: 'Dokument', hint: 'PDF, Word, Excel · czarno-biały · dwustronnie' },
+		doc: { name: 'Dokument', hint: 'PDF, Word, Excel · kolor · dwustronnie' },
 		photo: { name: 'Zdjęcie', hint: 'JPG, PNG · kolor · dopasuj do strony' }
 	},
 	pickFile: { doc: 'Wybierz plik', photo: 'Wybierz zdjęcia' },
