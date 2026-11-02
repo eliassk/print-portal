@@ -18,7 +18,7 @@ export const pl = {
 	privacy: {
 		title: 'Twoje pliki nie są przechowywane',
 		points: (min: number) => [
-			'Plik służy tylko do przygotowania wydruku i nie jest nigdzie archiwizowany. Po wysłaniu do drukarki od razu go usuwamy.',
+			'Plik służy tylko do przygotowania wydruku i nie jest nigdzie archiwizowany.',
 			`Drukarka trzyma wydruk zabezpieczony PIN-em najwyżej ${min} minut, potem sama go kasuje.`,
 			'Nie zapisujemy nazw plików, ich treści ani PIN-ów. Zostaje tylko liczba kartek, do dziennego limitu.'
 		]
