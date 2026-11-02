@@ -6,5 +6,5 @@ import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async () => {
 	const status = await printerStatus(config.printerHost, config.printerIppPort);
-	return json({ ...status, colorAllowed: getDb().settings().colorAllowed });
+	return json({ ...status, colorAllowed: getDb().settings().colorAllowed, pinTtlMin: config.pinTtlMin });
 };

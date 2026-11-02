@@ -13,6 +13,7 @@
 		check: 'M5 12l5 5L20 7',
 		minus: 'M5 12h14',
 		plus: 'M12 5v14M5 12h14',
+		shield: 'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4',
 		lock: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4'
 	} as const;
 	let { name, size = 20 }: { name: keyof typeof PATHS; size?: number } = $props();

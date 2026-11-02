@@ -9,7 +9,7 @@
 	import { trayFor } from '$lib/trayFor';
 
 	type Screen = 'start' | 'file' | 'opts' | 'sum' | 'pin';
-	type Status = PrinterStatus & { colorAllowed: boolean };
+	type Status = PrinterStatus & { colorAllowed: boolean; pinTtlMin: number };
 	const STORE = 'print-portal.settings';
 
 	let screen = $state<Screen>('start');
@@ -238,6 +238,10 @@
 				{/each}
 			</div>
 			{#if saved[kind]}<p class="note info"><Icon name="check" size={18} />{pl.lastUsed}: <b>{pl.presets[kind].name}</b>. {pl.remembered}</p>{/if}
+			<section class="card privacy">
+				<div class="ptitle"><span class="ic sm"><Icon name="shield" size={20} /></span><h2>{pl.privacy.title}</h2></div>
+				<ul>{#each pl.privacy.points(printer?.pinTtlMin ?? 60) as p (p)}<li>{p}</li>{/each}</ul>
+			</section>
 			{#if printer?.online}
 				<section class="card">
 					<h2 class="lbl">{pl.printerLabel}</h2>
@@ -1009,6 +1013,23 @@
 		width: 20px;
 		height: 20px;
 		accent-color: var(--accent);
+	}
+	.ptitle {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	.ptitle h2 {
+		font-size: 1.05rem;
+		margin: 0;
+	}
+	.privacy ul {
+		margin: 0;
+		padding-left: 1.2em;
+		display: grid;
+		gap: 6px;
+		color: var(--muted);
+		font-size: 14.5px;
 	}
 	.narrow {
 		display: grid;

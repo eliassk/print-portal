@@ -15,6 +15,14 @@ export const pl = {
 	printerOk: 'Gotowa',
 	printerOff: 'Niedostępna',
 	changeFile: 'Zmień plik',
+	privacy: {
+		title: 'Twoje pliki nie są przechowywane',
+		points: (min: number) => [
+			'Plik trafia prosto do drukarki i jest od razu usuwany z serwera. Niewysłany plik znika po 30 minutach.',
+			`Drukarka trzyma wydruk zabezpieczony PIN-em najwyżej ${min} minut, potem sama go kasuje.`,
+			'Nie zapisujemy nazw plików, ich treści ani PIN-ów. Zostaje tylko liczba kartek, do dziennego limitu.'
+		]
+	},
 	secureNote: 'Wydruk czeka w drukarce zabezpieczony PIN-em. Nikt inny go nie odbierze.',
 	startQuestion: 'Co drukujesz?',
 	presets: {
