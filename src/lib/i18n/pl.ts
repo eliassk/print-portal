@@ -136,6 +136,8 @@ export const pl = {
 	admin: {
 		title: 'Panel administratora',
 		login: 'Zaloguj',
+		loginHint: 'Stan drukarki, ustawienia i ostatnie wydruki.',
+		backToPortal: 'Wróć do portalu',
 		logout: 'Wyloguj',
 		password: 'Hasło',
 		wrongPassword: 'Złe hasło.',
@@ -159,8 +161,17 @@ export const pl = {
 		card: 'Karta z kodem QR do powieszenia przy drukarce'
 	},
 	card: {
-		title: 'Drukuj z telefonu',
-		steps: ['Połącz się z Wi-Fi budynku.', 'Zeskanuj kod aparatem.', 'Wybierz plik i ustawienia.', 'Na drukarce: Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN.'],
-		thick: 'Gruby papier wkładasz do podajnika bocznego, po prawej stronie drukarki.'
+		title: 'Drukuj z telefonu lub komputera',
+		subtitle: 'Zeskanuj kod QR albo wejdź na adres poniżej.',
+		wifiTitle: 'Najpierw połącz się z Wi-Fi budynku',
+		wifiBody: 'Aplikacja działa tylko w sieci lokalnej.',
+		scan: 'Zeskanuj aparatem',
+		orOpen: 'albo wejdź na',
+		steps: [
+			{ title: 'Wybierz plik', body: 'Dokument lub zdjęcie, ustaw papier i kolor.' },
+			{ title: 'Wyślij do drukarki', body: 'Na ekranie zobaczysz ID zadania i PIN.' },
+			{ title: 'Odbierz przy drukarce', body: 'Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN.' }
+		],
+		privacy: 'Pliki nie są przechowywane. Wydruk czeka na PIN najwyżej 60 minut.'
 	}
 };

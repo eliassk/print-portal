@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/Icon.svelte';
 	import { pl } from '$lib/i18n/pl';
 	import TrayList from '$lib/TrayList.svelte';
 	let { data, form } = $props();
@@ -8,24 +9,32 @@
 
 <svelte:head><title>{pl.admin.title} · {pl.appName}</title></svelte:head>
 
+{#if data.state !== 'in'}
+	<div class="gate">
+		<div class="gate-card">
+			<span class="logo"><Icon name="lock" size={24} /></span>
+			<h1>{pl.admin.title}</h1>
+			<p class="muted">{pl.admin.loginHint}</p>
+			{#if data.state === 'disabled'}
+				<p class="note">{pl.admin.disabled}</p>
+			{:else}
+				<form method="POST" action="?/login" class="login">
+					<label for="password">{pl.admin.password}</label>
+					<input id="password" name="password" type="password" autocomplete="current-password" required />
+					{#if form?.error}<p class="err">{form.error}</p>{/if}
+					<button class="btn">{pl.admin.login}</button>
+				</form>
+			{/if}
+			<a class="back" href="/"><Icon name="left" size={16} />{pl.admin.backToPortal}</a>
+		</div>
+	</div>
+{:else}
 <main>
 	<header>
 		<h1>{pl.admin.title}</h1>
-		{#if data.state === 'in'}
-			<form method="POST" action="?/logout"><button class="link">{pl.admin.logout}</button></form>
-		{/if}
+		<form method="POST" action="?/logout"><button class="link">{pl.admin.logout}</button></form>
 	</header>
 
-	{#if data.state === 'disabled'}
-		<p class="note">{pl.admin.disabled}</p>
-	{:else if data.state === 'login'}
-		<form method="POST" action="?/login" class="card login">
-			<label for="password">{pl.admin.password}</label>
-			<input id="password" name="password" type="password" autocomplete="current-password" required />
-			{#if form?.error}<p class="err">{form.error}</p>{/if}
-			<button class="btn">{pl.admin.login}</button>
-		</form>
-	{:else}
 		<section class="card">
 			<h2>{pl.admin.printer}</h2>
 			{#if data.status.online}
@@ -74,10 +83,75 @@
 			{/if}
 		</section>
 		<p><a href="/karta">{pl.admin.card}</a></p>
-	{/if}
 </main>
+{/if}
 
 <style>
+	.gate {
+		min-height: 100dvh;
+		display: grid;
+		place-items: center;
+		padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+	}
+	.gate-card {
+		width: 100%;
+		max-width: 380px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 20px;
+		box-shadow: var(--shadow-lift);
+		padding: 32px 28px 24px;
+		display: grid;
+		gap: 14px;
+		justify-items: center;
+		text-align: center;
+	}
+	.gate-card h1 {
+		font-size: 1.4rem;
+	}
+	.gate-card .muted {
+		margin: -6px 0 6px;
+	}
+	.logo {
+		width: 52px;
+		height: 52px;
+		border-radius: 16px;
+		display: grid;
+		place-items: center;
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+	.login {
+		width: 100%;
+		display: grid;
+		gap: 8px;
+		text-align: left;
+	}
+	.login label {
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--muted);
+	}
+	.login input {
+		height: 46px;
+		font-size: 16px;
+	}
+	.login input:focus {
+		border-color: var(--accent);
+		outline: 3px solid var(--accent-soft);
+	}
+	.login .btn {
+		margin-top: 6px;
+		height: 46px;
+	}
+	.back {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-top: 6px;
+		font-size: 14px;
+		text-decoration: none;
+	}
 	main {
 		max-width: 1040px;
 		margin: 0 auto;
