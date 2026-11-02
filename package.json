@@ -13,7 +13,7 @@
 		"test": "vitest run",
 		"send-secure": "node --experimental-strip-types scripts/send-secure.ts",
 		"mock-printer": "node --experimental-strip-types scripts/mock-printer.ts",
-		"dev:mock": "PRINTER_HOST=127.0.0.1 PRINTER_PORT=9190 PRINTER_IPP_PORT=6310 DATA_DIR=./data ADMIN_PASSWORD=test ADMIN_SECRET=local-mock-secret-0123456789abcdef PORTAL_URL=http://localhost:5180 vite dev --host 0.0.0.0 --port 5180"
+		"dev:mock": "PRINTER_HOST=127.0.0.1 PRINTER_PORT=9190 PRINTER_IPP_PORT=6310 DATA_DIR=./data ADMIN_PASSWORD=${ADMIN_PASSWORD:-test} ADMIN_SECRET=local-mock-secret-0123456789abcdef PORTAL_URL=http://localhost:5180 vite dev --host 0.0.0.0 --port 5180"
 	},
 	"dependencies": {
 		"pdf-lib": "^1.17.1",
