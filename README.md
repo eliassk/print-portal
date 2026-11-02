@@ -55,7 +55,7 @@ Release it: **Skrzynka → System → Wydruk bezpieczny**, ID `203`, PIN `2030`.
 ## Deploy on the Ubuntu VM
 
 ```bash
-cp .env.example .env   # set LAN_IP to the VM's LAN address
+cp .env.example .env   # set LAN_IP to the VM's LAN address; PORTAL_PORT if 80 is taken
 docker compose up -d --build
 ```
 
