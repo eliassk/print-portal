@@ -85,7 +85,7 @@
 		previewBusy = true;
 		try {
 			const res = await fetch(`/api/preview/${draft}?sheet=${page}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
-			const data = await res.json();
+			const data = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
 			preview = data;
 			if (sheet > data.faces) sheet = data.faces;
@@ -126,7 +126,7 @@
 			const body = new FormData();
 			for (const f of files) body.append('file', f);
 			const res = await fetch('/api/upload', { method: 'POST', body });
-			const data = await res.json();
+			const data = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
 			draft = data.draft;
 			items = data.items;
@@ -147,7 +147,7 @@
 		busy = true;
 		try {
 			const res = await fetch(`/api/print/${draft}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(effective) });
-			const data = await res.json();
+			const data = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
 			result = data;
 			draft = null;
