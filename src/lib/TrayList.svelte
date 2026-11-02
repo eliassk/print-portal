@@ -31,11 +31,15 @@
 		padding: 12px 14px;
 		min-width: 0;
 	}
+	/* Name above, status label below, in every card, so the bars line up across the row. */
 	.head {
 		display: flex;
-		justify-content: space-between;
+		flex-direction: column;
+		align-items: flex-start;
 		gap: 6px;
-		align-items: center;
+	}
+	.head b {
+		white-space: nowrap;
 	}
 	.compact .head b {
 		font-size: 14px;
