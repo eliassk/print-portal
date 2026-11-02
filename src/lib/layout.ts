@@ -20,15 +20,17 @@ export interface Sheet {
 }
 
 /**
- * Splits a sheet into `nup` cells inside the printable area. 2-up turns the sheet to
- * landscape so two portrait pages sit side by side; 1, 4 and 9 keep it portrait.
+ * Splits a sheet into `nup` cells inside the printable area. By default 2-up turns the
+ * sheet to landscape so two portrait pages sit side by side; 1, 4 and 9 keep it portrait.
  * Cells are filled left to right, top to bottom.
  */
-export function sheetLayout(size: keyof typeof SIZES, nup: 1 | 2 | 4 | 9, landscape = false): Sheet {
+export function sheetLayout(size: keyof typeof SIZES, nup: 1 | 2 | 4 | 9, orient?: 'portrait' | 'landscape', marginMm = MARGIN_MM): Sheet {
 	let [w, h] = SIZES[size].map((v) => v * MM);
-	if (nup === 2 ? !landscape : landscape) [w, h] = [h, w];
-	const [cols, rows] = nup === 1 ? [1, 1] : nup === 2 ? [2, 1] : nup === 4 ? [2, 2] : [3, 3];
-	const m = MARGIN_MM * MM;
+	const landscape = (orient ?? (nup === 2 ? 'landscape' : 'portrait')) === 'landscape';
+	if (landscape) [w, h] = [h, w];
+	// Two cells sit side by side on a landscape sheet and stacked on a portrait one.
+	const [cols, rows] = nup === 1 ? [1, 1] : nup === 2 ? (landscape ? [2, 1] : [1, 2]) : nup === 4 ? [2, 2] : [3, 3];
+	const m = Math.max(MARGIN_MM, marginMm) * MM;
 	const gap = nup === 1 ? 0 : GAP_MM * MM;
 	const cw = (w - 2 * m - gap * (cols - 1)) / cols;
 	const ch = (h - 2 * m - gap * (rows - 1)) / rows;

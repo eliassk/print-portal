@@ -27,7 +27,7 @@ export const pl = {
 	takePhoto: 'Zrób zdjęcie',
 	fileTypes: {
 		doc: 'PDF, Word, Excel, PowerPoint. Do 50 MB.',
-		photo: 'JPG lub PNG, kilka naraz. Zdjęcia z iPhone’a telefon sam zamieni na JPG.'
+		photo: 'JPG lub PNG, kilka naraz.'
 	},
 	uploading: 'Wysyłanie pliku…',
 	converting: 'Przygotowuję plik…',
@@ -55,6 +55,16 @@ export const pl = {
 	duplexThick: 'Na grubym papierze drukujemy tylko jednostronnie.',
 	nup: { doc: 'Stron na kartce', photo: 'Zdjęć na kartce' },
 	fit: 'Zdjęcie na kartce',
+	margin: 'Margines',
+	marginHint: 'Biały brzeg wokół wydruku. Drukarka nie drukuje bliżej niż 5 mm od krawędzi.',
+	marginLabel: (mm: number) => (mm === 5 ? 'Najmniejszy · 5 mm' : `${mm} mm`),
+	orientation: 'Orientacja kartki',
+	orientationOptions: { auto: 'Automatycznie', portrait: 'Pionowo', landscape: 'Poziomo' },
+	orientationHint: {
+		auto: 'Zdjęcia obracają się same, żeby jak najlepiej wypełnić kartkę.',
+		portrait: 'Kartka pionowa, zdjęcia bez obracania.',
+		landscape: 'Kartka pozioma, zdjęcia bez obracania.'
+	},
 	fitOptions: { fit: 'Dopasuj', fill: 'Wypełnij' },
 	fitHint: { fit: 'Całe zdjęcie, z białym brzegiem.', fill: 'Bez brzegu, krawędzie zdjęcia mogą się uciąć.' },
 	paper: 'Rodzaj papieru',

@@ -44,6 +44,8 @@ const job = buildSecureJob(
 			duplex,
 			nup: 1,
 			fit: 'fit',
+			orientation: 'auto',
+			margin: 5,
 			paper: values.paper as Paper
 		}
 	},

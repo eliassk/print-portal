@@ -15,6 +15,21 @@ describe('sheetLayout', () => {
 		expect(s.cells).toHaveLength(2);
 		expect(s.cells[1].x).toBeGreaterThan(s.cells[0].x);
 	});
+	it('widens the edge to the chosen margin', () => {
+		const s = sheetLayout('A4', 1, undefined, 15);
+		expect(s.cells[0].x).toBeCloseTo(15 * MM);
+		expect(s.cells[0].w).toBeCloseTo(180 * MM);
+	});
+	it('never goes below the printer edge', () => expect(sheetLayout('A4', 1, undefined, 0).cells[0].x).toBeCloseTo(5 * MM));
+	it('stacks 2-up on a portrait sheet', () => {
+		const s = sheetLayout('A4', 2, 'portrait');
+		expect(s.height).toBeGreaterThan(s.width);
+		expect(s.cells[0].y).toBeGreaterThan(s.cells[1].y);
+	});
+	it('turns a single photo sheet to landscape when asked', () => {
+		const s = sheetLayout('A4', 1, 'landscape');
+		expect(s.width).toBeGreaterThan(s.height);
+	});
 	it('fills 9-up top row first', () => {
 		const s = sheetLayout('A4', 9);
 		expect(s.cells).toHaveLength(9);

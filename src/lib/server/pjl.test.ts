@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildSecureJob } from './pjl.ts';
 import type { PrintOptions } from '../options.ts';
 
-const opts: PrintOptions = { copies: 2, range: '', size: 'A4', color: 'color', duplex: 'long', nup: 1, fit: 'fit', paper: 'plain' };
+const opts: PrintOptions = { copies: 2, range: '', size: 'A4', color: 'color', duplex: 'long', nup: 1, fit: 'fit', orientation: 'auto', margin: 5, paper: 'plain' };
 const pdf = new TextEncoder().encode('%PDF-1.7 test');
 const text = (b: Uint8Array) => new TextDecoder().decode(b);
 

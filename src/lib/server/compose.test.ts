@@ -19,6 +19,11 @@ describe('compose', () => {
 		expect(r.faces).toBe(3);
 	});
 
+	it('shrinks pages onto a wider margin', async () => {
+		const r = await compose({ kind: 'doc', pdf: await pdfWith(2) }, { ...PRESETS.doc, margin: 20 });
+		expect(r.faces).toBe(2);
+	});
+
 	it('puts four pages on one sheet', async () => {
 		const r = await compose({ kind: 'doc', pdf: await pdfWith(6) }, { ...PRESETS.doc, nup: 4 });
 		expect(r.faces).toBe(2);
@@ -30,6 +35,12 @@ describe('compose', () => {
 		expect(r.faces).toBe(1);
 		const page = (await PDFDocument.load(r.pdf)).getPage(0);
 		expect(Math.round(page.getWidth())).toBe(595);
+	});
+
+	it('prints a landscape sheet without turning the photo', async () => {
+		const r = await compose({ kind: 'photo', images: [await photo(1600, 1200)] }, { ...PRESETS.photo, orientation: 'landscape' });
+		const page = (await PDFDocument.load(r.pdf)).getPage(0);
+		expect(page.getWidth()).toBeGreaterThan(page.getHeight());
 	});
 
 	it('flags a small photo on a full page as low resolution', async () => {

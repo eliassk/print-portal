@@ -3,7 +3,7 @@
 	import { pl } from '$lib/i18n/pl';
 	import Icon from '$lib/Icon.svelte';
 	import TrayList from '$lib/TrayList.svelte';
-	import { NUP_CHOICES, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
+	import { MARGINS, NUP_CHOICES, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
 	import { parseRange } from '$lib/pages';
 	import type { PrinterStatus } from '$lib/status';
 	import { trayFor } from '$lib/trayFor';
@@ -359,7 +359,17 @@
 								{@render seg(['fit', 'fill'] as const, opts.fit, (v) => (opts.fit = v), (v) => pl.fitOptions[v])}
 								<p class="hint">{pl.fitHint[opts.fit]}</p>
 							</div>
+							<div class="field wide">
+								<span class="lbl">{pl.orientation}</span>
+								{@render seg(['auto', 'portrait', 'landscape'] as const, opts.orientation, (v) => (opts.orientation = v), (v) => pl.orientationOptions[v])}
+								<p class="hint">{pl.orientationHint[opts.orientation]}</p>
+							</div>
 						{/if}
+						<div class="field wide">
+							<span class="lbl">{pl.margin}</span>
+							{@render seg(MARGINS, opts.margin, (v) => (opts.margin = v), (v) => pl.marginLabel(v))}
+							<p class="hint">{pl.marginHint}</p>
+						</div>
 						<div class="field wide">
 							<span class="lbl">{pl.duplex}</span>
 							{@render seg(['off', 'long', 'short'] as const, effective.duplex, (v) => (opts.duplex = v), (v) => pl.duplexOptions[v], (v) => v !== 'off' && usesBypass(opts.paper))}
@@ -583,6 +593,8 @@
 		padding: 16px;
 		min-width: 0;
 		display: grid;
+		/* minmax(0, 1fr): long file names MUST NOT widen the card past its column. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: 12px;
 		align-content: start;
 	}
@@ -870,7 +882,7 @@
 		min-width: 180px;
 	}
 	.grid2 {
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
 		gap: 18px;
 	}
 	.wide {

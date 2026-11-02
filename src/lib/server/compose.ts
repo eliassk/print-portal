@@ -24,12 +24,14 @@ async function composeDoc(input: Uint8Array, o: PrintOptions): Promise<Composed>
 	const pages = parseRange(o.range, source.getPageCount());
 	if (!pages) throw new RangeError('range');
 	const out = await PDFDocument.create();
-	if (o.nup === 1) {
-		// One page per sheet: copy pages untouched, so links, fonts and sizes stay as they are.
+	if (o.nup === 1 && o.margin === 5) {
+		// One page per sheet at the printer's own edge: copy pages untouched.
 		for (const p of await out.copyPages(source, pages.map((n) => n - 1))) out.addPage(p);
 	} else {
 		for (let i = 0; i < pages.length; i += o.nup) {
-			const sheet = sheetLayout(o.size, o.nup);
+			const first = source.getPage(pages[i] - 1);
+			const wide = o.nup === 1 && first.getWidth() > first.getHeight();
+			const sheet = sheetLayout(o.size, o.nup, wide ? 'landscape' : undefined, o.margin);
 			const page = out.addPage([sheet.width, sheet.height]);
 			for (const [j, cell] of sheet.cells.entries()) {
 				const n = pages[i + j];
@@ -49,7 +51,7 @@ async function composePhotos(images: Uint8Array[], o: PrintOptions): Promise<Com
 	const out = await PDFDocument.create();
 	let lowRes = false;
 	for (let i = 0; i < images.length; i += o.nup) {
-		const sheet = sheetLayout(o.size, o.nup);
+		const sheet = sheetLayout(o.size, o.nup, o.orientation === 'auto' ? undefined : o.orientation, o.margin);
 		const page = out.addPage([sheet.width, sheet.height]);
 		for (const [j, cell] of sheet.cells.entries()) {
 			const img = images[i + j];
@@ -69,7 +71,7 @@ async function preparePhoto(input: Uint8Array, cell: Rect, o: PrintOptions) {
 	const upright = await sharp(input).rotate().toBuffer({ resolveWithObject: true });
 	let { width, height } = upright.info;
 	let img = sharp(upright.data);
-	if (width > height !== cell.w > cell.h && width !== height) {
+	if (o.orientation === 'auto' && width > height !== cell.w > cell.h && width !== height) {
 		img = img.rotate(90);
 		[width, height] = [height, width];
 	}
