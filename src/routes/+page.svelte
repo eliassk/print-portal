@@ -3,7 +3,7 @@
 	import { pl } from '$lib/i18n/pl';
 	import Icon from '$lib/Icon.svelte';
 	import TrayList from '$lib/TrayList.svelte';
-	import { MARGINS, NUP_CHOICES, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
+	import { MARGINS, NUP_CHOICES, COMMON_PAPERS, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
 	import { SIZES } from '$lib/layout';
 	import { parseRange } from '$lib/pages';
 	import type { PrinterStatus } from '$lib/status';
@@ -31,6 +31,17 @@
 	let result = $state<{ id: string; pin: string; expires: number; sheets: number } | null>(null);
 	let now = $state(Date.now());
 	let dragging = $state(false);
+	type Pick = { sheets: { name: string; range: string }[]; fit: boolean };
+	/** Spreadsheets only: the sheets in the file and the choice the current PDF was made from. */
+	let book = $state<{ list: { name: string; range: string | null }[]; pick: Pick } | null>(null);
+	let picks = $state<{ name: string; on: boolean; range: string }[]>([]);
+	let fitWide = $state(true);
+	let bookBusy = $state(false);
+	let revision = $state(0);
+	let morePapers = $state(false);
+	// A chosen rare paper MUST stay visible, or the choice is hidden from the person.
+	const allPapers = $derived(morePapers || !(COMMON_PAPERS as readonly string[]).includes(opts.paper));
+	const shownPapers = $derived(allPapers ? PAPERS : COMMON_PAPERS);
 
 	try {
 		const s = JSON.parse(localStorage.getItem(STORE) ?? 'null');
@@ -45,6 +56,8 @@
 	const tray = $derived(trayFor(effective, printer));
 	const left = $derived(result ? Math.max(0, result.expires - now) : 0);
 	const mmss = $derived(`${String(Math.floor(left / 60000)).padStart(2, '0')}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`);
+	const pickNow = $derived<Pick>({ sheets: picks.filter((p) => p.on).map(({ name, range }) => ({ name, range: range.trim() })), fit: fitWide });
+	const pickDirty = $derived(!!book && JSON.stringify(pickNow) !== JSON.stringify(book.pick));
 	const fileKey = $derived(kind === 'doc' ? pl.pages(items) : pl.photos(items));
 	// The printer's 5 mm edge as a share of the sheet, to draw the printable area on the preview.
 	const edge = $derived.by(() => {
@@ -75,6 +88,7 @@
 	$effect(() => {
 		const body = JSON.stringify(effective);
 		const page = sheet;
+		void revision;
 		if ((screen !== 'opts' && screen !== 'sum') || !draft || !rangeOk) return;
 		clearTimeout(debounce);
 		debounce = setTimeout(() => renderPreview(body, page), 250);
@@ -131,6 +145,7 @@
 			draft = data.draft;
 			items = data.items;
 			if (data.kind !== kind) choose(data.kind);
+			setBook(data.sheets ?? null);
 			preview = null;
 			sheet = 1;
 			screen = 'opts';
@@ -138,6 +153,36 @@
 			error = err instanceof Error ? err.message : pl.errors.generic;
 		} finally {
 			busy = false;
+		}
+	}
+
+	function setBook(b: typeof book) {
+		book = b;
+		if (!b) return;
+		picks = b.list.map((s) => {
+			const p = b.pick.sheets.find((x) => x.name === s.name);
+			return { name: s.name, on: !!p, range: p?.range ?? s.range ?? '' };
+		});
+		fitWide = b.pick.fit;
+	}
+
+	async function applySheets() {
+		if (!draft || !book) return;
+		error = '';
+		bookBusy = true;
+		try {
+			const res = await fetch(`/api/sheets/${draft}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(pickNow) });
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			items = data.items;
+			book.pick = data.pick;
+			opts.range = '';
+			sheet = 1;
+			revision++;
+		} catch (err) {
+			error = err instanceof Error ? err.message : pl.errors.generic;
+		} finally {
+			bookBusy = false;
 		}
 	}
 
@@ -171,6 +216,7 @@
 		preview = null;
 		fileName = '';
 		items = 0;
+		book = null;
 		error = '';
 		screen = 'start';
 	}
@@ -324,6 +370,24 @@
 				</aside>
 
 				<div class="settings">
+					{#if book}
+						<section class="card">
+							<span class="lbl">{pl.sheetsTitle}</span>
+							<div class="books">
+								{#each picks as p (p.name)}
+									<div class="bsheet" class:on={p.on}>
+										<label class="bname"><input type="checkbox" bind:checked={p.on} /><span>{p.name}</span></label>
+										<input class="input" type="text" aria-label={pl.cellRangeFor(p.name)} placeholder={pl.cellRangePlaceholder} disabled={!p.on} bind:value={p.range} />
+									</div>
+								{/each}
+							</div>
+							<p class="hint">{pl.cellRangeHint}</p>
+							<label class="toggle"><input type="checkbox" bind:checked={fitWide} /><span>{pl.fitWide}</span></label>
+							{#if pickDirty}
+								<button class="btn" disabled={bookBusy || !pickNow.sheets.length} onclick={applySheets}>{bookBusy ? pl.sheetsBusy : pl.sheetsApply}</button>
+							{/if}
+						</section>
+					{/if}
 					<section class="card">
 						<div class="row">
 							<div class="field">
@@ -388,14 +452,17 @@
 					<section class="card">
 						<span class="lbl">{pl.paper}</span>
 						<div class="papers">
-							{#each PAPERS as p, i (p)}
+							{#each shownPapers as p (p)}
 								<button class="paper" aria-pressed={opts.paper === p} onclick={() => (opts.paper = p)}>
-									<span class="sw" style="height: {6 + i * 3.5}px" aria-hidden="true"></span>
-									<span class="ptext"><b>{pl.papers[p].name}</b><small>{pl.gsm(PAPER_GSM[p])} · {pl.papers[p].use}</small></span>
+									<span class="sw" class:special={!PAPER_GSM[p]} style="height: {PAPER_GSM[p] ? 6 + PAPERS.indexOf(p) * 3.5 : 6}px" aria-hidden="true"></span>
+									<span class="ptext"><b>{pl.papers[p].name}</b><small>{[pl.gsm(PAPER_GSM[p]), pl.papers[p].use].filter(Boolean).join(' · ')}</small></span>
 									{#if opts.paper === p}<span class="tick"><Icon name="check" size={16} /></span>{/if}
 								</button>
 							{/each}
 						</div>
+						<button class="more" aria-expanded={allPapers} onclick={() => (morePapers = !allPapers)}>
+							<Icon name={allPapers ? 'minus' : 'plus'} size={16} />{allPapers ? pl.fewerPapers : pl.morePapers(PAPERS.length - COMMON_PAPERS.length)}
+						</button>
 						{@render trayNote()}
 					</section>
 
@@ -418,7 +485,7 @@
 						<div><span>{pl.color}</span><b>{pl.colorOptions[effective.color]}</b></div>
 						<div><span>{pl.print}</span><b>{pl.duplexSummary[effective.duplex]}</b></div>
 						<div><span>{pl.nup[kind]}</span><b>{effective.nup}</b></div>
-						<div><span>{pl.paper}</span><b>{pl.papers[effective.paper].name} · {pl.gsm(PAPER_GSM[effective.paper])}</b></div>
+						<div><span>{pl.paper}</span><b>{[pl.papers[effective.paper].name, pl.gsm(PAPER_GSM[effective.paper])].filter(Boolean).join(' · ')}</b></div>
 						{#if tray}<div><span>{pl.tray}</span><b>{pl.trays[tray.key]}</b></div>{/if}
 						<div class="tot"><span>{pl.total}</span><b>{pl.sheets(preview?.sheets ?? 0)}</b></div>
 					</section>
@@ -1010,6 +1077,58 @@
 		display: grid;
 		place-items: center;
 		flex: none;
+	}
+	.books {
+		display: grid;
+		gap: 8px;
+		margin: 8px 0 6px;
+	}
+	.bsheet {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 140px;
+		gap: 10px;
+		align-items: center;
+	}
+	.bname {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+		cursor: pointer;
+		color: var(--muted);
+	}
+	.bsheet.on .bname {
+		color: inherit;
+		font-weight: 600;
+	}
+	.bname span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.bname input {
+		flex: none;
+		width: 20px;
+		height: 20px;
+		accent-color: var(--accent);
+	}
+	.bsheet .input:disabled {
+		opacity: 0.45;
+	}
+	.more {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 10px;
+		padding: 6px 2px;
+		border: 0;
+		background: none;
+		color: var(--accent);
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.sw.special {
+		background: repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 5px);
 	}
 	.toggle {
 		display: flex;

@@ -2,14 +2,20 @@ import { usesBypass, type Paper, type PrintOptions } from '../options.ts';
 
 // Captured from the Windows driver: plain paper is MEDIATYPE=PAPER, MEDIAWEIGHT=NORMAL, MEDIASOURCE=AUTO.
 // The thick weights and the bypass name are NOT captured yet. Stage 0 MUST confirm them with
-// one driver capture per paper type; only this table changes.
-const WEIGHT: Record<Paper, string> = {
-	plain: 'NORMAL',
-	thick1: 'THICK1',
-	thick1p: 'THICK1PLUS',
-	thick2: 'THICK2',
-	thick3: 'THICK3',
-	thick4: 'THICK4'
+// one driver capture per paper type; only this table changes. Every value but plain is unverified.
+const MEDIA: Record<Paper, { type: string; weight: string; color?: string; preprinted?: boolean }> = {
+	plain: { type: 'PAPER', weight: 'NORMAL' },
+	thick1: { type: 'PAPER', weight: 'THICK1' },
+	thick1p: { type: 'PAPER', weight: 'THICK1PLUS' },
+	thick2: { type: 'PAPER', weight: 'THICK2' },
+	thick3: { type: 'PAPER', weight: 'THICK3' },
+	thick4: { type: 'PAPER', weight: 'THICK4' },
+	letterhead: { type: 'PAPER', weight: 'NORMAL', preprinted: true },
+	colored: { type: 'PAPER', weight: 'NORMAL', color: 'OTHER' },
+	label: { type: 'LABEL', weight: 'NORMAL' },
+	transparency: { type: 'TRANSPARENCY', weight: 'NORMAL' },
+	singleside: { type: 'SINGLESIDE', weight: 'NORMAL' },
+	special: { type: 'SPECIAL', weight: 'NORMAL' }
 };
 const BYPASS = 'MANUALFEED';
 
@@ -48,8 +54,10 @@ export function buildSecureJob(job: SecureJob, pdf: Uint8Array): Uint8Array {
 		`@PJL SET BINDING = ${o.duplex === 'short' ? 'TOP' : 'LEFT'}`,
 		`@PJL SET PAPER = ${o.size}`,
 		`@PJL SET MEDIASOURCE = ${usesBypass(o.paper) ? BYPASS : 'AUTO'}`,
-		'@PJL SET MEDIATYPE = PAPER',
-		`@PJL SET MEDIAWEIGHT = ${WEIGHT[o.paper]}`,
+		`@PJL SET MEDIATYPE = ${MEDIA[o.paper].type}`,
+		`@PJL SET MEDIAWEIGHT = ${MEDIA[o.paper].weight}`,
+		`@PJL SET MEDIACOLOR = ${MEDIA[o.paper].color ?? 'NONE'}`,
+		`@PJL SET MEDIAPREPRINTED = ${MEDIA[o.paper].preprinted ? 'ON' : 'OFF'}`,
 		// COLOR is from the capture. GRAYSCALE and PLANESINUSE=1 for mono are unverified.
 		`@PJL SET DRIVERCOLORSELECT = ${o.color === 'color' ? 'COLOR' : 'GRAYSCALE'}`,
 		`@PJL SET PLANESINUSE = ${o.color === 'color' ? 3 : 1}`,

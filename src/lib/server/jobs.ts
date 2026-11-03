@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { config } from './config.ts';
 import { compose, type Composed, type Source } from './compose.ts';
 import type { Kind, PrintOptions } from '../options.ts';
+import type { Workbook } from './intake.ts';
+import type { Book, SheetPick } from './workbook.ts';
 
 interface Draft {
 	kind: Kind;
@@ -12,6 +14,8 @@ interface Draft {
 	items: number;
 	device: string;
 	created: number;
+	/** Set for spreadsheets. files[0] is the PDF of the current pick. */
+	sheets?: { file: string; book: Book; pick: SheetPick };
 	/** Last composed result, so print sends exactly what the preview showed. */
 	cache?: { key: string; result: Composed };
 }
@@ -22,7 +26,7 @@ const DRAFT_TTL_MS = 30 * 60 * 1000;
 
 const dir = () => join(config.dataDir, 'uploads');
 
-export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, device: string): Promise<string> {
+export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, device: string, workbook?: Workbook): Promise<string> {
 	await sweep();
 	await mkdir(dir(), { recursive: true });
 	const key = randomUUID();
@@ -32,7 +36,13 @@ export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, d
 		await writeFile(f, d);
 		files.push(f);
 	}
-	drafts.set(key, { kind, files, items, device, created: Date.now() });
+	let sheets: Draft['sheets'];
+	if (workbook) {
+		const file = join(dir(), `${key}-book`);
+		await writeFile(file, workbook.xlsx);
+		sheets = { file, book: workbook.book, pick: workbook.pick };
+	}
+	drafts.set(key, { kind, files, items, device, created: Date.now(), sheets });
 	return key;
 }
 
@@ -52,10 +62,20 @@ export async function composeDraft(d: Draft, o: PrintOptions): Promise<Composed>
 	return result;
 }
 
+export const readBookFile = (d: Draft) => readFile(d.sheets!.file);
+
+/** Swaps in the PDF of a new sheet pick. */
+export async function repick(d: Draft, pick: SheetPick, pdf: Uint8Array, pages: number) {
+	await writeFile(d.files[0], pdf);
+	d.items = pages;
+	d.sheets!.pick = pick;
+	d.cache = undefined;
+}
+
 export async function dropDraft(key: string) {
 	const d = drafts.get(key);
 	drafts.delete(key);
-	if (d) await Promise.all(d.files.map((f) => rm(f, { force: true })));
+	if (d) await Promise.all([...d.files, ...(d.sheets ? [d.sheets.file] : [])].map((f) => rm(f, { force: true })));
 }
 
 async function sweep() {

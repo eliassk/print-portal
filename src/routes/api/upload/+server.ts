@@ -15,5 +15,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!result.ok) return json({ error: pl.errors[result.error] }, { status: 400 });
 	const max = getDb().settings().maxPages;
 	if (result.items > max) return json({ error: pl.errors.tooManyPages(max) }, { status: 400 });
-	return json({ draft: await saveDraft(result.kind, result.data, result.items, locals.device), kind: result.kind, items: result.items });
+	const draft = await saveDraft(result.kind, result.data, result.items, locals.device, result.workbook);
+	const sheets = result.workbook && { list: result.workbook.book.sheets, pick: result.workbook.pick };
+	return json({ draft, kind: result.kind, items: result.items, sheets });
 };

@@ -52,6 +52,13 @@ describe('buildSecureJob', () => {
 		expect(out).toContain('MEDIAWEIGHT = THICK2');
 	});
 
+	it('sends special paper as its media type through the bypass tray', () => {
+		const label = text(buildSecureJob({ id: '1', pin: '1234', options: { ...opts, paper: 'label' } }, pdf));
+		expect(label).toContain('MEDIATYPE = LABEL');
+		expect(label).toContain('MEDIASOURCE = MANUALFEED');
+		expect(text(buildSecureJob({ id: '1', pin: '1234', options: { ...opts, paper: 'letterhead' } }, pdf))).toContain('MEDIAPREPRINTED = ON');
+	});
+
 	it('sends A5 as the paper size', () =>
 		expect(text(buildSecureJob({ id: '1', pin: '1234', options: { ...opts, size: 'A5' } }, pdf))).toContain('@PJL SET PAPER = A5'));
 

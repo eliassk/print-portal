@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-export const PAPERS = ['plain', 'thick1', 'thick1p', 'thick2', 'thick3', 'thick4'] as const;
+export const PAPERS = ['plain', 'thick1', 'thick1p', 'thick2', 'thick3', 'thick4', 'letterhead', 'colored', 'label', 'transparency', 'singleside', 'special'] as const;
+/** Shown at once; the rest sit behind "more paper types". */
+export const COMMON_PAPERS = ['plain', 'thick1', 'thick1p', 'thick2'] as const satisfies readonly Paper[];
 export type Paper = (typeof PAPERS)[number];
 
 /** Grammage per paper type. Ranges follow the usual C224e spec and MUST be checked in its manual. */
-export const PAPER_GSM: Record<Paper, [number, number]> = {
+export const PAPER_GSM: Partial<Record<Paper, [number, number]>> = {
 	plain: [60, 90],
 	thick1: [91, 120],
 	thick1p: [121, 157],
