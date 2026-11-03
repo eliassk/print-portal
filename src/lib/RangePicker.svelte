@@ -264,25 +264,10 @@
 		font-size: 0.9rem;
 	}
 	.btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		width: auto;
 		height: 42px;
 		padding: 0 18px;
-		border: 0;
 		border-radius: 12px;
-		background: var(--accent);
-		color: var(--on-accent);
-		font-weight: 600;
-		cursor: pointer;
-	}
-	.btn:disabled {
-		opacity: 0.5;
-		cursor: default;
-	}
-	.btn.sec {
-		background: var(--surface);
-		color: var(--fg);
-		border: 1px solid var(--line);
+		box-shadow: none;
 	}
 </style>

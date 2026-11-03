@@ -189,13 +189,10 @@
 		font-size: 0.95rem;
 		margin: 16px 0 8px;
 	}
+	/* Shared card, but with plain block flow and more room. */
 	.card {
-		background: var(--surface);
-		border: 1px solid var(--line);
-		border-radius: var(--radius);
-		box-shadow: var(--shadow);
+		display: block;
 		padding: 20px;
-		min-width: 0;
 	}
 	.login {
 		display: grid;
@@ -223,20 +220,12 @@
 	.row:last-child {
 		border: 0;
 	}
+	/* Compact buttons; the shared ones are full width. */
 	.btn {
-		border: 0;
+		width: auto;
 		border-radius: 12px;
 		padding: 10px 16px;
-		font-weight: 600;
-		background: var(--accent);
-		color: var(--on-accent);
-		cursor: pointer;
-	}
-	.link {
-		border: 0;
-		background: none;
-		color: var(--accent);
-		cursor: pointer;
+		box-shadow: none;
 	}
 	.toner {
 		display: grid;
@@ -294,12 +283,6 @@
 	.note {
 		background: var(--warn-soft);
 		color: var(--warn);
-		padding: 12px;
-		border-radius: 10px;
-	}
-	.err {
-		color: var(--bad);
-		margin: 0;
 	}
 	.ok {
 		color: var(--ok);

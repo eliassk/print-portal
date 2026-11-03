@@ -59,7 +59,10 @@
 	.bar i.low {
 		background: var(--warn);
 	}
+	/* Inline, unlike the shared block-level small. */
 	small {
+		display: inline;
+		font-size: smaller;
 		color: var(--muted);
 	}
 	.pill {

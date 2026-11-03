@@ -753,52 +753,6 @@
 		color: var(--muted);
 		max-width: 52ch;
 	}
-	.card {
-		background: var(--surface);
-		border: 1px solid var(--line);
-		border-radius: var(--radius);
-		box-shadow: var(--shadow);
-		padding: 16px;
-		min-width: 0;
-		display: grid;
-		/* minmax(0, 1fr): long file names MUST NOT widen the card past its column. */
-		grid-template-columns: minmax(0, 1fr);
-		gap: 12px;
-		align-content: start;
-	}
-	.lbl {
-		font-size: 12px;
-		font-weight: 650;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-		color: var(--muted);
-		margin: 0;
-	}
-	small {
-		display: block;
-		color: var(--muted);
-		font-size: 13.5px;
-	}
-	.ic {
-		width: 52px;
-		height: 52px;
-		border-radius: 14px;
-		display: grid;
-		place-items: center;
-		background: var(--accent-soft);
-		color: var(--accent);
-		flex: none;
-	}
-	.ic.sm {
-		width: 40px;
-		height: 40px;
-		border-radius: 11px;
-	}
-	.ic.big {
-		width: 64px;
-		height: 64px;
-		border-radius: 18px;
-	}
 	.presets {
 		display: grid;
 		gap: 12px;
@@ -827,10 +781,6 @@
 	}
 	.preset b {
 		font-size: 1.1rem;
-	}
-	.ptext {
-		flex: 1;
-		min-width: 0;
 	}
 	.go {
 		color: var(--muted);
@@ -915,15 +865,6 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.link {
-		border: 0;
-		background: none;
-		color: var(--accent);
-		font-size: 14px;
-		font-weight: 550;
-		cursor: pointer;
-		padding: 4px;
-	}
 	.prev {
 		background: var(--sunk);
 		border-radius: 12px;
@@ -991,53 +932,6 @@
 	.stepper button:hover {
 		border-color: var(--accent);
 		color: var(--accent);
-	}
-	.hint {
-		margin: 0;
-		font-size: 13.5px;
-		color: var(--muted);
-	}
-	.center {
-		text-align: center;
-	}
-	.btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		width: 100%;
-		border: 0;
-		border-radius: 14px;
-		padding: 15px 20px;
-		font-weight: 600;
-		font-size: 1rem;
-		background: var(--accent);
-		color: var(--on-accent);
-		cursor: pointer;
-		box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 28%, transparent);
-		transition:
-			background 0.15s,
-			transform 0.1s;
-	}
-	.btn:hover:not(:disabled) {
-		background: var(--accent-hover);
-	}
-	.btn:active:not(:disabled) {
-		transform: scale(0.99);
-	}
-	.btn:disabled {
-		opacity: 0.5;
-		cursor: default;
-		box-shadow: none;
-	}
-	.btn.sec {
-		background: var(--surface);
-		color: var(--fg);
-		border: 1px solid var(--line);
-		box-shadow: var(--shadow);
-	}
-	.btn.sec:hover {
-		background: var(--sunk);
 	}
 	.cta {
 		display: grid;
@@ -1389,10 +1283,6 @@
 		color: var(--muted);
 		font-size: 14.5px;
 	}
-	.narrow {
-		display: grid;
-		gap: 16px;
-	}
 	.sum {
 		gap: 0;
 		padding: 6px 18px;
@@ -1468,36 +1358,6 @@
 		padding-left: 1.3em;
 		display: grid;
 		gap: 6px;
-	}
-	.note {
-		display: flex;
-		gap: 10px;
-		align-items: flex-start;
-		margin: 0;
-		font-size: 14.5px;
-		border-radius: 12px;
-		padding: 12px 14px;
-	}
-	.note :global(svg) {
-		flex: none;
-		margin-top: 1px;
-	}
-	.note.info {
-		background: var(--accent-soft);
-		color: var(--accent);
-	}
-	.note.warn {
-		background: var(--warn-soft);
-		color: var(--warn);
-	}
-	.note.bad {
-		background: var(--bad-soft);
-		color: var(--bad);
-	}
-	.err {
-		color: var(--bad);
-		font-size: 14px;
-		margin: 0;
 	}
 
 	/* Tablet and up: two presets side by side. */
