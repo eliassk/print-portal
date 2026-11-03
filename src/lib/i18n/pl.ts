@@ -12,6 +12,7 @@ export const pl = {
 	stepNames: ['Rodzaj', 'Plik', 'Ustawienia', 'Podsumowanie', 'Odbiór'],
 	tagline: 'Wyślij plik z telefonu lub komputera i odbierz wydruk przy drukarce.',
 	dropHint: 'albo przeciągnij tutaj',
+	or: 'albo',
 	paste: 'Wklej ze schowka',
 	pastedName: 'wklejony',
 	pasteEmpty: 'W schowku nie ma zdjęcia ani PDF-a. Skopiuj plik i spróbuj ponownie.',

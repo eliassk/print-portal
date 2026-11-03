@@ -10,6 +10,7 @@ export const en: typeof pl = {
 	stepNames: ['Type', 'File', 'Settings', 'Summary', 'Pick up'],
 	tagline: 'Send a file from your phone or computer and pick up the print at the printer.',
 	dropHint: 'or drop it here',
+	or: 'or',
 	paste: 'Paste from clipboard',
 	pastedName: 'pasted',
 	pasteEmpty: 'There is no image or PDF in the clipboard. Copy the file and try again.',
