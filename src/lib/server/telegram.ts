@@ -1,9 +1,10 @@
+import { randomBytes } from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import { pl } from '../i18n/pl.ts';
 import { getDb } from './app.ts';
 import { config } from './config.ts';
 import { intake } from './intake.ts';
-import { saveClaimable } from './jobs.ts';
+import { BOT_DRAFT_TTL_MIN, saveClaimable } from './jobs.ts';
 
 // Overridable only for local tests against a fake Telegram server.
 const API = env.TELEGRAM_API ?? 'https://api.telegram.org';
@@ -11,6 +12,40 @@ const API = env.TELEGRAM_API ?? 'https://api.telegram.org';
 export const TELEGRAM_MAX_BYTES = 20 * 1024 * 1024;
 const RATE_FILES = 10;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
+const LINK_TTL_MS = 10 * 60 * 1000;
+const MAX_LINKS = 1000;
+/** A chat stays authorized this long after the person connected it from the portal. */
+export const AUTH_DAYS = 30;
+const AUTH_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
+
+// Tokens handed out on the portal, waiting for "/start <token>" in the bot chat.
+const links = new Map<string, number>();
+let botName = '';
+
+/** Whether the portal can offer the connect button. */
+export const botReady = () => !!botName;
+
+/**
+ * A one-time t.me link that authorizes the chat it is opened in.
+ * Only the portal hands these out, so only people on the building network can get one.
+ */
+export function connectLink(now = Date.now()): string | null {
+	if (!botName) return null;
+	for (const [t, exp] of links) if (exp < now) links.delete(t);
+	if (links.size >= MAX_LINKS) return null;
+	const token = randomBytes(18).toString('base64url');
+	links.set(token, now + LINK_TTL_MS);
+	return `https://t.me/${botName}?start=${token}`;
+}
+
+/** Uses up a connect token. True when it was valid. */
+export function useLink(token: string, now = Date.now()): boolean {
+	const exp = links.get(token);
+	links.delete(token);
+	return exp !== undefined && exp >= now;
+}
+
+export const isAuthorized = (chat: number, now = Date.now()) => getDb().chatAuthorizedSince(chat, now - AUTH_MS);
 
 type TgFile = { file_id: string; file_name?: string; file_size?: number; mime_type?: string };
 type Message = { chat: { id: number }; text?: string; document?: TgFile; photo?: TgFile[] };
@@ -53,8 +88,20 @@ const reply = (token: string, chat: number, text: string) =>
 
 async function handle(token: string, m: Message) {
 	const chat = m.chat.id;
+	const start = m.text?.match(/^\/start(?:@\w+)?\s+([\w-]{10,64})$/);
+	if (start) {
+		if (!useLink(start[1])) return reply(token, chat, pl.bot.linkGone(config.portalUrl));
+		getDb().authorizeChat(chat, Date.now());
+		return reply(token, chat, pl.bot.connected(AUTH_DAYS, BOT_DRAFT_TTL_MIN));
+	}
+	if (/^\/stop\b/.test(m.text ?? '')) {
+		getDb().forgetChat(chat);
+		return reply(token, chat, pl.bot.stopped);
+	}
+	// Unknown chats get nothing downloaded or saved.
+	if (!isAuthorized(chat)) return reply(token, chat, pl.bot.notConnected(config.portalUrl));
 	const file = pickFile(m);
-	if (!file) return reply(token, chat, pl.bot.hello(config.portalUrl));
+	if (!file) return reply(token, chat, pl.bot.hello);
 	if (!allowFile(chat, Date.now())) return reply(token, chat, pl.bot.rate);
 	if ((file.file_size ?? 0) > Math.min(TELEGRAM_MAX_BYTES, config.maxUploadBytes)) return reply(token, chat, pl.bot.tooBig);
 
@@ -69,7 +116,7 @@ async function handle(token: string, m: Message) {
 	const max = getDb().settings().maxPages;
 	if (result.items > max) return reply(token, chat, pl.errors.tooManyPages(max));
 	const claim = await saveClaimable(result.kind, result.data, result.items, result.workbook, file.file_name);
-	return reply(token, chat, pl.bot.ready(file.file_name, `${config.portalUrl.replace(/\/$/, '')}/?d=${claim}`));
+	return reply(token, chat, pl.bot.ready(file.file_name, `${config.portalUrl.replace(/\/$/, '')}/?d=${claim}`, BOT_DRAFT_TTL_MIN));
 }
 
 let running = false;
@@ -84,7 +131,15 @@ export function startBot() {
 	running = true;
 	void (async () => {
 		let offset = 0;
-		console.log('Telegram bot started');
+		while (!botName) {
+			try {
+				botName = (await call<{ username: string }>(token, 'getMe', {})).username;
+			} catch (e) {
+				console.error(e);
+				await new Promise((r) => setTimeout(r, 5000));
+			}
+		}
+		console.log(`Telegram bot @${botName} started`);
 		for (;;) {
 			try {
 				const updates = await call<Update[]>(token, 'getUpdates', { offset, timeout: 50, allowed_updates: ['message'] }, AbortSignal.timeout(60_000));

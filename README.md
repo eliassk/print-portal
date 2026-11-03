@@ -108,12 +108,18 @@ People forward a file to the bot and get a one-time link back. The link opens th
 
 1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and copy its token.
 2. Put it in `.env` as `TELEGRAM_BOT_TOKEN=…` and restart the stack.
-3. The log shows `Telegram bot started`.
+3. The log shows `Telegram bot @<name> started`, and the start page shows "Połącz z Telegramem".
+
+Only connected chats can send files:
+
+- On the portal, "Połącz z Telegramem" opens `t.me/<bot>?start=<token>`. The token works once, for 10 minutes. Only the portal hands them out, so only people on the building network can connect a chat.
+- Pressing Start in Telegram sends the token to the bot, which stores the chat as authorized for 30 days. `/stop` disconnects it.
+- Files from any other chat are refused before they are downloaded.
 
 How it works:
 
 - The server long-polls `api.telegram.org`. It only makes outbound HTTPS calls, so nothing new is exposed and the portal stays LAN-only.
-- The link works only on the building network, so the "be in the building" check still holds. The PIN step is unchanged.
-- Each link works once and expires with the draft after 30 minutes. The first browser that opens it owns the file.
+- A file from the bot stays on the server for 60 minutes and is then deleted. The bot says so in every reply.
+- Each print link works once. The first browser that opens it owns the file. The PIN step is unchanged.
 - Telegram lets bots download files up to 20 MB. Bigger files go through the portal directly.
 - Each chat may send 10 files per 10 minutes.

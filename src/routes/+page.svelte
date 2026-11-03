@@ -10,7 +10,7 @@
 	import { trayFor } from '$lib/trayFor';
 
 	type Screen = 'start' | 'file' | 'opts' | 'sum' | 'pin';
-	type Status = PrinterStatus & { colorAllowed: boolean; pinTtlMin: number };
+	type Status = PrinterStatus & { colorAllowed: boolean; pinTtlMin: number; telegram?: boolean };
 
 	let screen = $state<Screen>('start');
 	let kind = $state<Kind>('doc');
@@ -35,6 +35,7 @@
 	let fitWide = $state(true);
 	let bookBusy = $state(false);
 	let revision = $state(0);
+	let tgBusy = $state(false);
 	let morePapers = $state(false);
 	const TONER_LOW = 15;
 	const TONER_ORDER = ['black', 'cyan', 'magenta', 'yellow'];
@@ -205,6 +206,22 @@
 		}
 	}
 
+	async function connectTelegram() {
+		error = '';
+		tgBusy = true;
+		try {
+			const res = await fetch('/api/telegram', { method: 'POST' });
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			// A t.me link opens the Telegram app on phones and Telegram Web elsewhere.
+			location.href = data.url;
+		} catch (err) {
+			error = err instanceof Error ? err.message : pl.errors.generic;
+		} finally {
+			setTimeout(() => (tgBusy = false), 3000);
+		}
+	}
+
 	function setBook(b: typeof book) {
 		book = b;
 		if (!b) return;
@@ -354,6 +371,16 @@
 					</button>
 				{/each}
 			</div>
+			{#if printer?.telegram}
+				<section class="card tg">
+					<span class="ic sm"><Icon name="send" size={20} /></span>
+					<div class="tg-text">
+						<h2>{pl.telegram.title}</h2>
+						<p>{pl.telegram.body}</p>
+					</div>
+					<button class="btn tg-btn" disabled={tgBusy} onclick={connectTelegram}>{tgBusy ? pl.telegram.opening : pl.telegram.connect}</button>
+				</section>
+			{/if}
 			<section class="card privacy">
 				<div class="ptitle"><span class="ic sm"><Icon name="shield" size={20} /></span><h2>{pl.privacy.title}</h2></div>
 				<ul>{#each pl.privacy.points(printer?.pinTtlMin ?? 60) as p (p)}<li>{p}</li>{/each}</ul>
@@ -402,12 +429,6 @@
 				{/if}
 			</label>
 			<button class="paste" disabled={busy} onclick={pasteButton}><Icon name="clipboard" size={18} />{pl.paste}</button>
-			{#if kind === 'photo'}
-				<label class="btn sec cam">
-					<Icon name="camera" size={20} />{pl.takePhoto}
-					<input type="file" accept="image/*" capture="environment" onchange={upload} disabled={busy} />
-				</label>
-			{/if}
 		{:else if screen === 'opts'}
 			<div class="split">
 				<aside class="side">
@@ -856,9 +877,6 @@
 		opacity: 0;
 		pointer-events: none;
 	}
-	.cam {
-		position: relative;
-	}
 	.split {
 		display: grid;
 		gap: 16px;
@@ -1249,6 +1267,34 @@
 	}
 	.yellow {
 		background: #e8c21a;
+	}
+	.tg {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		gap: 14px;
+		align-items: center;
+	}
+	.tg h2 {
+		font-size: 1.05rem;
+		margin: 0;
+	}
+	.tg p {
+		margin: 4px 0 0;
+		color: var(--muted);
+		font-size: 14px;
+	}
+	.tg-btn {
+		width: auto;
+		padding: 0 18px;
+	}
+	@media (max-width: 560px) {
+		.tg {
+			grid-template-columns: auto minmax(0, 1fr);
+		}
+		.tg-btn {
+			grid-column: 1 / -1;
+			width: 100%;
+		}
 	}
 	.more {
 		display: inline-flex;

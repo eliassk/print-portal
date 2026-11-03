@@ -21,7 +21,7 @@ export interface JobRow {
 const DEFAULTS: Settings = { colorAllowed: true, dailyPages: 50, maxPages: 50 };
 
 /**
- * Jobs, daily counters and settings. File names and PINs are never stored.
+ * Jobs, daily counters, settings and authorized Telegram chats. File names and PINs are never stored.
  * Pass ':memory:' in tests.
  */
 export function openDb(dir: string | ':memory:') {
@@ -38,6 +38,7 @@ export function openDb(dir: string | ':memory:') {
 		);
 		CREATE INDEX IF NOT EXISTS jobs_device_at ON jobs (device, at);
 		CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+		CREATE TABLE IF NOT EXISTS telegram_chats (chat_id INTEGER PRIMARY KEY, authorized_at INTEGER NOT NULL);
 	`);
 
 	return {
@@ -80,6 +81,16 @@ export function openDb(dir: string | ':memory:') {
 		totals(since: number): { jobs: number; sheets: number } {
 			const r = db.prepare('SELECT COUNT(*) AS jobs, COALESCE(SUM(sheets), 0) AS sheets FROM jobs WHERE at >= ?').get(since) as { jobs: number; sheets: number };
 			return { jobs: Number(r.jobs), sheets: Number(r.sheets) };
+		},
+		/** Lets this Telegram chat send files. Renews an earlier authorization. */
+		authorizeChat(chat: number, now: number) {
+			db.prepare('INSERT INTO telegram_chats (chat_id, authorized_at) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET authorized_at = excluded.authorized_at').run(chat, now);
+		},
+		chatAuthorizedSince(chat: number, since: number): boolean {
+			return !!db.prepare('SELECT 1 FROM telegram_chats WHERE chat_id = ? AND authorized_at >= ?').get(chat, since);
+		},
+		forgetChat(chat: number) {
+			db.prepare('DELETE FROM telegram_chats WHERE chat_id = ?').run(chat);
 		},
 		/** Drops job rows older than `before`, so the table stays small. */
 		prune(before: number) {

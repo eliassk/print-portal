@@ -14,6 +14,8 @@ interface Draft {
 	items: number;
 	device: string;
 	created: number;
+	/** Files are deleted from disk at this time. */
+	expires: number;
 	/** Original file name, shown on the page. */
 	name: string;
 	/** Set while a draft from the Telegram bot waits for a browser to open its link. */
@@ -27,10 +29,15 @@ interface Draft {
 // Drafts live in memory and on disk for 30 minutes. A restart loses unsent drafts only.
 const drafts = new Map<string, Draft>();
 const DRAFT_TTL_MS = 30 * 60 * 1000;
+/** Files sent to the Telegram bot wait longer, since the person still has to reach the building Wi-Fi. */
+export const BOT_DRAFT_TTL_MIN = 60;
+
+// Expired files MUST leave the disk on time, even when nobody uploads anything new.
+setInterval(() => void sweep(), 60_000).unref();
 
 const dir = () => join(config.dataDir, 'uploads');
 
-export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, device: string, workbook?: Workbook, name = ''): Promise<string> {
+export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, device: string, workbook?: Workbook, name = '', ttlMs = DRAFT_TTL_MS): Promise<string> {
 	await sweep();
 	await mkdir(dir(), { recursive: true });
 	const key = randomUUID();
@@ -46,7 +53,8 @@ export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, d
 		await writeFile(file, workbook.xlsx);
 		sheets = { file, book: workbook.book, pick: workbook.pick };
 	}
-	drafts.set(key, { kind, files, items, device, created: Date.now(), sheets, name });
+	const created = Date.now();
+	drafts.set(key, { kind, files, items, device, created, expires: created + ttlMs, sheets, name });
 	return key;
 }
 
@@ -55,7 +63,7 @@ export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, d
  * The first browser that opens it becomes the owner.
  */
 export async function saveClaimable(kind: Kind, data: Uint8Array[], items: number, workbook: Workbook | undefined, name: string): Promise<string> {
-	const key = await saveDraft(kind, data, items, '', workbook, name);
+	const key = await saveDraft(kind, data, items, '', workbook, name, BOT_DRAFT_TTL_MIN * 60 * 1000);
 	const claim = randomBytes(18).toString('base64url');
 	drafts.get(key)!.claim = claim;
 	return claim;
@@ -64,7 +72,7 @@ export async function saveClaimable(kind: Kind, data: Uint8Array[], items: numbe
 /** Hands a waiting draft to this device. Works once. */
 export function claimDraft(claim: string, device: string): { key: string; draft: Draft } | null {
 	for (const [key, d] of drafts) {
-		if (!d.claim || d.claim !== claim || Date.now() - d.created > DRAFT_TTL_MS) continue;
+		if (!d.claim || d.claim !== claim || Date.now() > d.expires) continue;
 		d.claim = undefined;
 		d.device = device;
 		return { key, draft: d };
@@ -75,7 +83,7 @@ export function claimDraft(claim: string, device: string): { key: string; draft:
 /** The draft, if it exists and belongs to this device. */
 export function getDraft(key: string, device: string): Draft | null {
 	const d = drafts.get(key);
-	return d && d.device && d.device === device ? d : null;
+	return d && d.device && d.device === device && Date.now() <= d.expires ? d : null;
 }
 
 export async function composeDraft(d: Draft, o: PrintOptions): Promise<Composed> {
@@ -106,5 +114,5 @@ export async function dropDraft(key: string) {
 
 async function sweep() {
 	const now = Date.now();
-	for (const [k, d] of drafts) if (now - d.created > DRAFT_TTL_MS) await dropDraft(k);
+	for (const [k, d] of drafts) if (now > d.expires) await dropDraft(k);
 }

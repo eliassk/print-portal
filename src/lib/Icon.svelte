@@ -15,7 +15,8 @@
 		plus: 'M12 5v14M5 12h14',
 		shield: 'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4',
 		lock: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4',
-		clipboard: 'M9 4h6v3H9zM9 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-3'
+		clipboard: 'M9 4h6v3H9zM9 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-3',
+		send: 'M21 3 3 10.5l7 2.5M21 3l-7 18-4-8M21 3 10 13'
 	} as const;
 	let { name, size = 20 }: { name: keyof typeof PATHS; size?: number } = $props();
 </script>

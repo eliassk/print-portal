@@ -33,7 +33,6 @@ export const pl = {
 		photo: { name: 'Zdjęcie', hint: 'JPG, PNG · kolor · dopasuj do strony' }
 	},
 	pickFile: { doc: 'Wybierz plik', photo: 'Wybierz zdjęcia' },
-	takePhoto: 'Zrób zdjęcie',
 	fileTypes: {
 		doc: 'PDF, Word, Excel, PowerPoint. Do 50 MB.',
 		photo: 'JPG lub PNG, kilka naraz.'
@@ -135,12 +134,23 @@ export const pl = {
 	tonerLabel: 'Toner',
 	toner: { black: 'Czarny', cyan: 'Cyjan', magenta: 'Magenta', yellow: 'Żółty' } satisfies Record<Toner['key'], string>,
 	bot: {
-		hello: (url: string) =>
-			`Wyślij mi plik (PDF, Word, Excel, PowerPoint) albo zdjęcie, a odpowiem linkiem do drukowania.\n\nLink otworzysz tylko w Wi-Fi budynku. Możesz też wejść od razu na ${url}`,
-		ready: (name: string, url: string) =>
-			`Gotowe: ${name}\n\nPołącz się z Wi-Fi budynku i otwórz link, żeby wybrać ustawienia i wydrukować:\n${url}\n\nLink jest jednorazowy i działa 30 minut.`,
+		hello: 'Wyślij mi plik (PDF, Word, Excel, PowerPoint) albo zdjęcie, a odpowiem linkiem do drukowania.',
+		connected: (days: number, minutes: number) =>
+			`Połączono. Przez ${days} dni możesz wysyłać mi pliki (PDF, Word, Excel, PowerPoint) albo zdjęcia, a odpowiem linkiem do drukowania.\n\nPrzesłany plik czeka na serwerze ${minutes} minut, potem jest usuwany.\n\nŻeby odłączyć ten czat, wyślij /stop.`,
+		notConnected: (url: string) =>
+			`Najpierw połącz ten czat z drukarką. W Wi-Fi budynku wejdź na ${url} i stuknij „Połącz z Telegramem”. Tego pliku nie zapisałem.`,
+		linkGone: (url: string) => `Ten link do połączenia wygasł albo był już użyty. Wejdź jeszcze raz na ${url} i stuknij „Połącz z Telegramem”.`,
+		stopped: 'Odłączono. Nie przyjmę już plików z tego czatu.',
+		ready: (name: string, url: string, minutes: number) =>
+			`Gotowe: ${name}\n\nPołącz się z Wi-Fi budynku i otwórz link, żeby wybrać ustawienia i wydrukować:\n${url}\n\nLink jest jednorazowy. Plik jest na serwerze ${minutes} minut, potem zostanie usunięty.`,
 		tooBig: 'Ten plik jest za duży dla bota (limit Telegrama to 20 MB). Otwórz portal w Wi-Fi budynku i wybierz plik tam.',
 		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.'
+	},
+	telegram: {
+		title: 'Plik z Telegrama',
+		body: 'Połącz czat z drukarką, a potem przesyłaj pliki do bota. Odpowie linkiem do drukowania.',
+		connect: 'Połącz z Telegramem',
+		opening: 'Otwieram Telegram…'
 	},
 	errors: {
 		rangeInvalid: 'Nie rozumiem zakresu. Wpisz np. 1–3, 5.',
@@ -155,7 +165,7 @@ export const pl = {
 		officeMissing: 'Pliki Word i Excel nie są jeszcze obsługiwane na tym serwerze. Zapisz plik jako PDF.',
 		broken: 'Nie mogę otworzyć tego pliku. Zapisz go jeszcze raz i spróbuj ponownie.',
 		expiredDraft: 'Plik wygasł. Wybierz go jeszcze raz.',
-		claimGone: 'Ten link już nie działa. Był jednorazowy i ważny 30 minut. Wyślij plik do bota jeszcze raz.',
+		claimGone: 'Ten link już nie działa. Był jednorazowy, a plik usuwamy z serwera po 60 minutach. Wyślij plik do bota jeszcze raz.',
 		rate: 'Wysłano kilka wydruków pod rząd. Odczekaj 10 minut.',
 		daily: (left: number) => `Dzisiejszy limit wydruków wyczerpany. Zostało ${left} kartek na dziś.`,
 		colorOff: 'Druk w kolorze jest wyłączony. Wybierz czarno-biały.',
