@@ -14,8 +14,8 @@ const RATE_FILES = 10;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const LINK_TTL_MS = 10 * 60 * 1000;
 const MAX_LINKS = 1000;
-/** A chat stays authorized this long after the person connected it from the portal. */
-export const AUTH_DAYS = 30;
+/** A chat stays authorized this long after connecting or after its last print. */
+export const AUTH_DAYS = 90;
 const AUTH_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
 
 // Tokens handed out on the portal, waiting for "/start <token>" in the bot chat.
@@ -125,6 +125,7 @@ async function handle(token: string, m: Message) {
  */
 export async function notifyPrinted(chat: number, job: { id: string; pin: string; expires: number; name: string; sheets: number }) {
 	if (!config.telegramToken) return;
+	getDb().renewChat(chat, Date.now());
 	const until = new Date(job.expires).toLocaleTimeString('pl-PL', { timeZone: config.timeZone, hour: '2-digit', minute: '2-digit' });
 	await reply(config.telegramToken, chat, pl.bot.printed({ ...job, until }));
 }

@@ -136,7 +136,7 @@ export const pl = {
 	bot: {
 		hello: 'Wyślij mi plik (PDF, Word, Excel, PowerPoint) albo zdjęcie, a odpowiem linkiem do drukowania.',
 		connected: (days: number, minutes: number) =>
-			`Połączono. Przez ${days} dni możesz wysyłać mi pliki (PDF, Word, Excel, PowerPoint) albo zdjęcia, a odpowiem linkiem do drukowania.\n\nPrzesłany plik czeka na serwerze ${minutes} minut, potem jest usuwany. Pliki przechodzą przez serwery Telegrama, więc poufne dokumenty drukuj bezpośrednio z portalu.\n\nŻeby odłączyć ten czat, wyślij /stop.`,
+			`Połączono. Możesz wysyłać mi pliki (PDF, Word, Excel, PowerPoint) albo zdjęcia, a odpowiem linkiem do drukowania. Połączenie wygaśnie po ${days} dniach bez wydruku, każdy wydruk liczy czas od nowa.\n\nPrzesłany plik czeka na serwerze ${minutes} minut, potem jest usuwany. Pliki przechodzą przez serwery Telegrama, więc poufne dokumenty drukuj bezpośrednio z portalu.\n\nŻeby odłączyć ten czat, wyślij /stop.`,
 		notConnected: (url: string) =>
 			`Najpierw połącz ten czat z drukarką. W Wi-Fi budynku wejdź na ${url} i stuknij „Połącz z Telegramem”. Tego pliku nie zapisałem.`,
 		linkGone: (url: string) => `Ten link do połączenia wygasł albo był już użyty. Wejdź jeszcze raz na ${url} i stuknij „Połącz z Telegramem”.`,

@@ -89,6 +89,10 @@ export function openDb(dir: string | ':memory:') {
 		chatAuthorizedSince(chat: number, since: number): boolean {
 			return !!db.prepare('SELECT 1 FROM telegram_chats WHERE chat_id = ? AND authorized_at >= ?').get(chat, since);
 		},
+		/** Restarts the clock for a chat that is still connected. A disconnected chat stays out. */
+		renewChat(chat: number, now: number) {
+			db.prepare('UPDATE telegram_chats SET authorized_at = ? WHERE chat_id = ?').run(now, chat);
+		},
 		forgetChat(chat: number) {
 			db.prepare('DELETE FROM telegram_chats WHERE chat_id = ?').run(chat);
 		},

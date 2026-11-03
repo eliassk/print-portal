@@ -113,7 +113,7 @@ People forward a file to the bot and get a one-time link back. The link opens th
 Only connected chats can send files:
 
 - On the portal, "Połącz z Telegramem" opens `t.me/<bot>?start=<token>`. The token works once, for 10 minutes. Only the portal hands them out, so only people on the building network can connect a chat.
-- Pressing Start in Telegram sends the token to the bot, which stores the chat as authorized for 30 days. `/stop` disconnects it.
+- Pressing Start in Telegram sends the token to the bot, which stores the chat as authorized. It expires after 90 days without a print; every print from the bot restarts the 90 days. `/stop` disconnects it.
 - Files from any other chat are refused before they are downloaded.
 
 How it works:

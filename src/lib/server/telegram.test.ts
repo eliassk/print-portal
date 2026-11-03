@@ -38,7 +38,10 @@ describe('telegram bot', () => {
 		expect(db.chatAuthorizedSince(5, 500)).toBe(true);
 		expect(db.chatAuthorizedSince(5, 2000)).toBe(false);
 		expect(db.chatAuthorizedSince(6, 0)).toBe(false);
+		db.renewChat(5, 3000);
+		expect(db.chatAuthorizedSince(5, 2000)).toBe(true);
 		db.forgetChat(5);
+		db.renewChat(5, 4000);
 		expect(db.chatAuthorizedSince(5, 0)).toBe(false);
 	});
 });
