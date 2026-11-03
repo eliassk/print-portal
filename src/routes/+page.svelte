@@ -7,7 +7,7 @@
 	import { MARGINS, NUP_CHOICES, COMMON_PAPERS, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
 	import { SIZES } from '$lib/layout';
 	import { parseRange } from '$lib/pages';
-	import type { PrinterStatus } from '$lib/status';
+	import { TONER_LOW, type PrinterStatus } from '$lib/status';
 	import { trayFor } from '$lib/trayFor';
 
 	type Screen = 'start' | 'file' | 'opts' | 'sum' | 'pin';
@@ -39,7 +39,6 @@
 	let revision = $state(0);
 	let tgBusy = $state(false);
 	let morePapers = $state(false);
-	const TONER_LOW = 15;
 	const TONER_ORDER = ['black', 'cyan', 'magenta', 'yellow'];
 	const toners = $derived([...(printer?.toner ?? [])].sort((a, b) => TONER_ORDER.indexOf(a.key) - TONER_ORDER.indexOf(b.key)));
 	// A chosen rare paper MUST stay visible, or the choice is hidden from the person.

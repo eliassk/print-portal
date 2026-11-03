@@ -2,6 +2,7 @@
 	import Icon from '$lib/Icon.svelte';
 	import { dateLocale, ui } from '$lib/i18n';
 	import TrayList from '$lib/TrayList.svelte';
+	import { TONER_LOW } from '$lib/status';
 	let { data, form } = $props();
 
 	const time = (t: number) => new Date(t).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
@@ -42,7 +43,7 @@
 				<h3>{ui.admin.toner}</h3>
 				<div class="toner">
 					{#each data.status.toner as t (t.key)}
-						<div><b class:low={t.level <= 15}>{t.level}%</b>{ui.toner[t.key]}</div>
+						<div><b class:low={t.level <= TONER_LOW}>{t.level}%</b>{ui.toner[t.key]}</div>
 					{/each}
 				</div>
 			{:else}
