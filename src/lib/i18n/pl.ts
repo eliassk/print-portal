@@ -113,7 +113,6 @@ export const pl = {
 	emptyTray: (tray: string) => `${tray}: brak papieru. Uzupełnij przed odbiorem.`,
 	lowRes: 'Zdjęcie ma niską rozdzielczość i może wyjść nieostre. Wybierz mniejszy rozmiar albo więcej zdjęć na kartce.',
 	printerOffline: 'Nie widzę drukarki. Wydruk może nie dojść.',
-	remember: 'Zapamiętaj ustawienia',
 	summary: 'Podsumowanie',
 	file: 'Plik',
 	total: 'Razem',

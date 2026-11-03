@@ -11,13 +11,10 @@
 
 	type Screen = 'start' | 'file' | 'opts' | 'sum' | 'pin';
 	type Status = PrinterStatus & { colorAllowed: boolean; pinTtlMin: number };
-	const STORE = 'print-portal.settings';
 
 	let screen = $state<Screen>('start');
 	let kind = $state<Kind>('doc');
-	let saved = $state<Partial<Record<Kind, PrintOptions>>>({});
 	let opts = $state<PrintOptions>({ ...PRESETS.doc });
-	let remember = $state(true);
 	let fileName = $state('');
 	let draft = $state<string | null>(null);
 	let items = $state(0);
@@ -45,14 +42,6 @@
 	// A chosen rare paper MUST stay visible, or the choice is hidden from the person.
 	const allPapers = $derived(morePapers || !(COMMON_PAPERS as readonly string[]).includes(opts.paper));
 	const shownPapers = $derived(allPapers ? PAPERS : COMMON_PAPERS);
-
-	try {
-		const s = JSON.parse(localStorage.getItem(STORE) ?? 'null');
-		if (s?.last === 'doc' || s?.last === 'photo') kind = s.last;
-		if (s?.opts) saved = s.opts;
-	} catch {
-		// Private mode or no saved settings: defaults are fine.
-	}
 
 	const effective = $derived(normalize(opts, kind));
 	const rangeOk = $derived(kind === 'photo' || parseRange(opts.range, items) !== null);
@@ -116,7 +105,7 @@
 
 	function choose(k: Kind) {
 		kind = k;
-		opts = { ...PRESETS[k], ...saved[k], range: '' };
+		opts = { ...PRESETS[k] };
 		if (printer && !printer.colorAllowed) opts.color = 'mono';
 		error = '';
 		screen = 'file';
@@ -200,12 +189,6 @@
 			result = data;
 			draft = null;
 			screen = 'pin';
-			try {
-				if (remember) localStorage.setItem(STORE, JSON.stringify({ last: kind, opts: { ...saved, [kind]: { ...effective, range: '' } } }));
-				else localStorage.removeItem(STORE);
-			} catch {
-				// Storage blocked: nothing to remember.
-			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : pl.errors.generic;
 			if (error === pl.errors.expiredDraft) draft = null;
@@ -481,7 +464,6 @@
 						{@render trayNote()}
 					</section>
 
-					<label class="toggle"><input type="checkbox" bind:checked={remember} /><span>{pl.remember}</span></label>
 					<div class="cta mob">
 						<button class="btn" disabled={!rangeOk || !preview} onclick={() => (screen = 'sum')}>{pl.next}: {pl.summary.toLowerCase()}<Icon name="right" size={18} /></button>
 					</div>
