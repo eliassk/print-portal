@@ -3,6 +3,7 @@
 	import { pl } from '$lib/i18n/pl';
 	import Icon from '$lib/Icon.svelte';
 	import TrayList from '$lib/TrayList.svelte';
+	import RangePicker from '$lib/RangePicker.svelte';
 	import { MARGINS, NUP_CHOICES, COMMON_PAPERS, PAPER_GSM, PAPERS, PRESETS, normalize, usesBypass, type Kind, type PrintOptions } from '$lib/options';
 	import { SIZES } from '$lib/layout';
 	import { parseRange } from '$lib/pages';
@@ -32,6 +33,7 @@
 	/** Spreadsheets only: the sheets in the file and the choice the current PDF was made from. */
 	let book = $state<{ list: { name: string; range: string | null }[]; pick: Pick } | null>(null);
 	let picks = $state<{ name: string; on: boolean; range: string }[]>([]);
+	let picking = $state<string | null>(null);
 	let fitWide = $state(true);
 	let bookBusy = $state(false);
 	let revision = $state(0);
@@ -461,9 +463,14 @@
 									<div class="bsheet" class:on={p.on}>
 										<label class="bname"><input type="checkbox" bind:checked={p.on} /><span>{p.name}</span></label>
 										<input class="input" type="text" aria-label={pl.cellRangeFor(p.name)} placeholder={pl.cellRangePlaceholder} disabled={!p.on} bind:value={p.range} />
+										<button class="gridbtn" aria-label={pl.rangePick.open(p.name)} title={pl.rangePick.open(p.name)} disabled={!p.on} onclick={() => (picking = p.name)}><Icon name="grid" size={20} /></button>
 									</div>
 								{/each}
 							</div>
+							{#if picking && draft}
+								{@const p = picks.find((x) => x.name === picking)!}
+								<RangePicker {draft} name={p.name} range={p.range} onpick={(range) => (p.range = range)} onclose={() => (picking = null)} />
+							{/if}
 							<p class="hint">{pl.cellRangeHint}</p>
 							<label class="toggle"><input type="checkbox" bind:checked={fitWide} /><span>{pl.fitWide}</span></label>
 							{#if pickDirty}
@@ -1182,7 +1189,7 @@
 	}
 	.bsheet {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) 140px;
+		grid-template-columns: minmax(0, 1fr) 140px 42px;
 		gap: 10px;
 		align-items: center;
 	}
@@ -1209,8 +1216,22 @@
 		height: 20px;
 		accent-color: var(--accent);
 	}
-	.bsheet .input:disabled {
+	.bsheet .input:disabled,
+	.gridbtn:disabled {
 		opacity: 0.45;
+	}
+	.gridbtn {
+		display: grid;
+		place-items: center;
+		height: 42px;
+		border: 1px solid var(--line-strong);
+		border-radius: 12px;
+		background: var(--surface);
+		color: var(--accent);
+		cursor: pointer;
+	}
+	.gridbtn:hover:not(:disabled) {
+		background: var(--accent-soft);
 	}
 	.lbl.sub {
 		margin: 18px 0 10px;

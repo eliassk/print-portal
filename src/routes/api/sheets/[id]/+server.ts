@@ -2,9 +2,22 @@ import { error, json } from '@sveltejs/kit';
 import { getDb } from '$lib/server/app';
 import { printBook } from '$lib/server/intake';
 import { getDraft, readBookFile, repick } from '$lib/server/jobs';
-import { SheetPick } from '$lib/server/workbook';
+import { readGrid, SheetPick } from '$lib/server/workbook';
 import { pl } from '$lib/i18n/pl';
 import type { RequestHandler } from './$types';
+
+/** Cell texts of one sheet of a spreadsheet draft, for the range picker. */
+export const GET: RequestHandler = async ({ params, url, locals }) => {
+	const draft = getDraft(params.id, locals.device);
+	if (!draft) return json({ error: pl.errors.expiredDraft }, { status: 404 });
+	if (!draft.sheets) error(400);
+	try {
+		return json(readGrid(await readBookFile(draft), url.searchParams.get('name') ?? ''));
+	} catch (e) {
+		if (e instanceof RangeError) error(404);
+		throw e;
+	}
+};
 
 /** Re-renders a spreadsheet draft with other sheets or ranges. */
 export const POST: RequestHandler = async ({ params, request, locals }) => {

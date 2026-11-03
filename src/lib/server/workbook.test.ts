@@ -1,6 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
-import { dataRange, normalizeRange, prepareBook, readBook } from './workbook.ts';
+import { dataRange, normalizeRange, prepareBook, readBook, readGrid } from './workbook.ts';
 
 const sheet = (body: string, tail = '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>') =>
 	`<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${body}</sheetData>${tail}</worksheet>`;
@@ -71,5 +71,25 @@ describe('workbook', () => {
 		const src = book([{ name: 'A', xml: data }]);
 		expect(() => prepareBook(src, { sheets: [{ name: 'B', range: '' }], fit: true })).toThrow(RangeError);
 		expect(() => prepareBook(src, { sheets: [{ name: 'A', range: 'abc' }], fit: true })).toThrow(RangeError);
+	});
+});
+
+describe('readGrid', () => {
+	it('reads shared, inline and number cells from A1', () => {
+		const xlsx = book([{ name: 'A', xml: sheet('<row r="2"><c r="B2" t="s"><v>1</v></c><c r="C3" t="inlineStr"><is><t>x &amp; y</t></is></c><c r="A3"><f>1/3</f><v>0.33333333333333331</v></c></row>') }]);
+		const files = unzipSync(xlsx);
+		files['xl/sharedStrings.xml'] = strToU8('<sst><si><t>zero</t></si><si><r><t>Sprzą</t></r><r><t>tanie</t></r></si></sst>');
+		const g = readGrid(zipSync(files), 'A');
+		expect(g).toMatchObject({ cols: 3, rows: 3, clipped: false });
+		expect(g.cells[1][1]).toBe('Sprzątanie');
+		expect(g.cells[2]).toEqual(['0.3333333333', '', 'x & y']);
+		expect(() => readGrid(xlsx, 'nope')).toThrow(RangeError);
+	});
+
+	it('shows date cells as dates', () => {
+		const xlsx = book([{ name: 'A', xml: sheet('<row r="1"><c r="A1" s="1"><v>45984</v></c><c r="B1" s="2"><v>45984.5</v></c><c r="C1" s="3"><v>0.25</v></c><c r="D1"><v>45984</v></c></row>') }]);
+		const files = unzipSync(xlsx);
+		files['xl/styles.xml'] = strToU8('<styleSheet><numFmts><numFmt numFmtId="164" formatCode="dd/mm/yyyy\\ hh:mm"/><numFmt numFmtId="165" formatCode="[h]:mm"/></numFmts><cellXfs><xf numFmtId="0"/><xf numFmtId="14"/><xf numFmtId="164"/><xf numFmtId="165"/></cellXfs></styleSheet>');
+		expect(readGrid(zipSync(files), 'A').cells[0]).toEqual(['23.11.2025', '23.11.2025 12:00', '06:00', '45984']);
 	});
 });

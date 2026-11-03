@@ -174,3 +174,94 @@ export function prepareBook(xlsx: Uint8Array, pick: SheetPick, orientation: 'por
 	files[WB] = strToU8(wb);
 	return zipSync(files as Zippable, { level: 6 });
 }
+
+/** Cell texts of one sheet from A1 to the last data cell, for picking a range by eye. */
+export type Grid = { cols: number; rows: number; cells: string[][]; clipped: boolean };
+
+const GRID_COLS = 40;
+const GRID_ROWS = 300;
+
+function sharedStrings(files: Record<string, Uint8Array>): string[] {
+	const xml = files['xl/sharedStrings.xml'];
+	if (!xml) return [];
+	return [...strFromU8(xml).matchAll(/<si>([\s\S]*?)<\/si>/g)].map(([, si]) =>
+		unescape([...si.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '').matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((t) => t[1]).join(''))
+	);
+}
+
+const showNumber = (v: string) => {
+	const n = Number(v);
+	return Number.isFinite(n) ? String(Number(n.toPrecision(10))) : v;
+};
+
+type DateStyle = 'date' | 'time' | 'datetime';
+
+/** Date styles by cell style index (the s attribute). Other styles are left out. */
+function dateStyles(files: Record<string, Uint8Array>): Map<number, DateStyle> {
+	const xml = files['xl/styles.xml'] ? strFromU8(files['xl/styles.xml']) : '';
+	const codes = new Map<number, string>();
+	for (const [tag] of xml.matchAll(/<numFmt\b[^>]*\/?>/g)) codes.set(Number(attr(tag, 'numFmtId')), unescape(attr(tag, 'formatCode') ?? ''));
+	const kind = (id: number): DateStyle | null => {
+		if ((id >= 14 && id <= 17) || id === 22) return id === 22 ? 'datetime' : 'date';
+		if ((id >= 18 && id <= 21) || (id >= 45 && id <= 47)) return 'time';
+		const code = codes.get(id)?.replace(/"[^"]*"|\[(?![hms]+\])[^\]]*\]|\\./g, '').toLowerCase();
+		if (!code) return null;
+		const d = /[dy]/.test(code) || /m/.test(code.replace(/h[^dy]*m|m[^dy]*s/g, ''));
+		const t = /[hs]/.test(code);
+		return d && t ? 'datetime' : d ? 'date' : t ? 'time' : null;
+	};
+	const map = new Map<number, DateStyle>();
+	const xfs = xml.match(/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/)?.[1] ?? '';
+	[...xfs.matchAll(/<xf\b[^>]*\/?>/g)].forEach(([tag], i) => {
+		const k = kind(Number(attr(tag, 'numFmtId') ?? 0));
+		if (k) map.set(i, k);
+	});
+	return map;
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** Excel serial day → "03.05.2026", "14:30" or both. */
+function showDate(v: string, style: DateStyle, date1904: boolean): string {
+	const n = Number(v);
+	if (!Number.isFinite(n)) return v;
+	// Serial 0 in the 1900 system is 1899-12-30, which absorbs Excel's fake 1900-02-29.
+	const ms = Math.round((n + (date1904 ? 1462 : 0) - 25569) * 86400000);
+	const d = new Date(ms);
+	const day = `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`;
+	const time = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+	return style === 'date' ? day : style === 'time' ? time : `${day} ${time}`;
+}
+
+/** Throws RangeError on an unknown sheet. */
+export function readGrid(xlsx: Uint8Array, name: string): Grid {
+	const files = open(xlsx);
+	const e = entries(files).find((x) => x.name === name && !x.hidden && x.path);
+	if (!e) throw new RangeError(`unknown sheet ${name}`);
+	const xml = strFromU8(files[e.path!]);
+	const strings = sharedStrings(files);
+	const dates = dateStyles(files);
+	const date1904 = /\bdate1904="(1|true)"/.test(strFromU8(files[WB]));
+	const found: [number, number, string][] = [];
+	for (const m of xml.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+		const ref = attr(m[1], 'r')?.match(CELL);
+		if (!ref || !m[2]) continue;
+		const v = unescape(m[2].match(/<v>([\s\S]*?)<\/v>/)?.[1] ?? '');
+		const t = attr(m[1], 't');
+		const text =
+			t === 's' ? (strings[Number(v)] ?? '')
+			: t === 'inlineStr' ? unescape([...m[2].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join(''))
+			: t === 'b' ? (v === '1' ? 'PRAWDA' : 'FAŁSZ')
+			: t === 'str' || t === 'e' ? v
+			: dates.has(Number(attr(m[1], 's') ?? 0)) ? showDate(v, dates.get(Number(attr(m[1], 's') ?? 0))!, date1904)
+			: showNumber(v);
+		if (text) found.push([colNum(ref[1]), Number(ref[2]), text]);
+	}
+	const maxC = Math.max(0, ...found.map((f) => f[0]));
+	const maxR = Math.max(0, ...found.map((f) => f[1]));
+	const cols = Math.min(Math.max(maxC, 1), GRID_COLS);
+	const rows = Math.min(Math.max(maxR, 1), GRID_ROWS);
+	const cells = Array.from({ length: rows }, () => Array<string>(cols).fill(''));
+	for (const [c, r, text] of found) if (c <= cols && r <= rows) cells[r - 1][c - 1] = text.slice(0, 80);
+	return { cols, rows, cells, clipped: maxC > cols || maxR > rows };
+}
