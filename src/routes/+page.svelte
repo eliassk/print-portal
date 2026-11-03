@@ -378,7 +378,11 @@
 						<h2>{pl.telegram.title}</h2>
 						<p>{pl.telegram.body}</p>
 					</div>
-					<button class="btn tg-btn" disabled={tgBusy} onclick={connectTelegram}>{tgBusy ? pl.telegram.opening : pl.telegram.connect}</button>
+					<button class="btn tg-btn" disabled={tgBusy} onclick={connectTelegram}><Icon name="send" size={18} />{tgBusy ? pl.telegram.opening : pl.telegram.connect}</button>
+					<div class="tg-safety">
+						<Icon name="shield" size={18} />
+						<ul>{#each pl.telegram.safety as p (p)}<li>{p}</li>{/each}</ul>
+					</div>
 				</section>
 			{/if}
 			<section class="card privacy">
@@ -1285,7 +1289,29 @@
 	}
 	.tg-btn {
 		width: auto;
-		padding: 0 18px;
+		padding: 12px 20px;
+		white-space: nowrap;
+	}
+	.tg-safety {
+		grid-column: 1 / -1;
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+		padding: 12px 14px;
+		border-radius: 12px;
+		background: var(--sunk);
+		color: var(--muted);
+		font-size: 14px;
+	}
+	.tg-safety :global(svg) {
+		flex: none;
+		margin-top: 1px;
+	}
+	.tg-safety ul {
+		margin: 0;
+		padding-left: 16px;
+		display: grid;
+		gap: 4px;
 	}
 	@media (max-width: 560px) {
 		.tg {

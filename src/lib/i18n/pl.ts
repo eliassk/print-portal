@@ -136,13 +136,13 @@ export const pl = {
 	bot: {
 		hello: 'Wyślij mi plik (PDF, Word, Excel, PowerPoint) albo zdjęcie, a odpowiem linkiem do drukowania.',
 		connected: (days: number, minutes: number) =>
-			`Połączono. Przez ${days} dni możesz wysyłać mi pliki (PDF, Word, Excel, PowerPoint) albo zdjęcia, a odpowiem linkiem do drukowania.\n\nPrzesłany plik czeka na serwerze ${minutes} minut, potem jest usuwany.\n\nŻeby odłączyć ten czat, wyślij /stop.`,
+			`Połączono. Przez ${days} dni możesz wysyłać mi pliki (PDF, Word, Excel, PowerPoint) albo zdjęcia, a odpowiem linkiem do drukowania.\n\nPrzesłany plik czeka na serwerze ${minutes} minut, potem jest usuwany. Pliki przechodzą przez serwery Telegrama, więc poufne dokumenty drukuj bezpośrednio z portalu.\n\nŻeby odłączyć ten czat, wyślij /stop.`,
 		notConnected: (url: string) =>
 			`Najpierw połącz ten czat z drukarką. W Wi-Fi budynku wejdź na ${url} i stuknij „Połącz z Telegramem”. Tego pliku nie zapisałem.`,
 		linkGone: (url: string) => `Ten link do połączenia wygasł albo był już użyty. Wejdź jeszcze raz na ${url} i stuknij „Połącz z Telegramem”.`,
 		stopped: 'Odłączono. Nie przyjmę już plików z tego czatu.',
 		ready: (name: string, url: string, minutes: number) =>
-			`Gotowe: ${name}\n\nPołącz się z Wi-Fi budynku i otwórz link, żeby wybrać ustawienia i wydrukować:\n${url}\n\nLink jest jednorazowy. Plik jest na serwerze ${minutes} minut, potem zostanie usunięty.`,
+			`Gotowe: ${name}\n\nPołącz się z Wi-Fi budynku i otwórz link, żeby wybrać ustawienia i wydrukować:\n${url}\n\nLink jest jednorazowy. Każdy, kto go ma, może otworzyć plik, więc nie przekazuj go dalej. Plik jest na serwerze ${minutes} minut, potem zostanie usunięty.`,
 		tooBig: 'Ten plik jest za duży dla bota (limit Telegrama to 20 MB). Otwórz portal w Wi-Fi budynku i wybierz plik tam.',
 		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.'
 	},
@@ -150,7 +150,12 @@ export const pl = {
 		title: 'Plik z Telegrama',
 		body: 'Połącz czat z drukarką, a potem przesyłaj pliki do bota. Odpowie linkiem do drukowania.',
 		connect: 'Połącz z Telegramem',
-		opening: 'Otwieram Telegram…'
+		opening: 'Otwieram Telegram…',
+		safety: [
+			'Plik przechodzi przez serwery Telegrama, a u nas czeka 60 minut, potem jest usuwany.',
+			'Każdy, kto ma link od bota, może otworzyć ten plik.',
+			'Poufne dokumenty drukuj bezpośrednio z portalu.'
+		]
 	},
 	errors: {
 		rangeInvalid: 'Nie rozumiem zakresu. Wpisz np. 1–3, 5.',
