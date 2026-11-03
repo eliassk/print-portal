@@ -1,4 +1,5 @@
 import type { Handle, ServerInit } from '@sveltejs/kit';
+import { lang } from '$lib/i18n';
 import { newDeviceId } from '$lib/server/auth';
 import { startBot } from '$lib/server/telegram';
 
@@ -14,5 +15,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 			secure: false, maxAge: 60 * 60 * 24 * 365 });
 	}
 	event.locals.device = device;
-	return resolve(event);
+	return resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', lang) });
 };

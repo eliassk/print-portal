@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { pl } from '$lib/i18n/pl';
+	import { ui } from '$lib/i18n';
 	import Icon from '$lib/Icon.svelte';
 	import TrayList from '$lib/TrayList.svelte';
 	import RangePicker from '$lib/RangePicker.svelte';
@@ -53,7 +53,7 @@
 	const mmss = $derived(`${String(Math.floor(left / 60000)).padStart(2, '0')}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`);
 	const pickNow = $derived<Pick>({ sheets: picks.filter((p) => p.on).map(({ name, range }) => ({ name, range: range.trim() })), fit: fitWide });
 	const pickDirty = $derived(!!book && JSON.stringify(pickNow) !== JSON.stringify(book.pick));
-	const fileKey = $derived(kind === 'doc' ? pl.pages(items) : pl.photos(items));
+	const fileKey = $derived(kind === 'doc' ? ui.pages(items) : ui.photos(items));
 	// The printer's 5 mm edge as a share of the sheet, to draw the printable area on the preview.
 	const edge = $derived.by(() => {
 		const [w, h] = SIZES[effective.size];
@@ -85,7 +85,7 @@
 			if (!files.length) throw new Error();
 			await uploadFiles(files);
 		} catch {
-			error = pl.pasteEmpty;
+			error = ui.pasteEmpty;
 		}
 	}
 
@@ -93,7 +93,7 @@
 	function named(f: File): File {
 		if (f.name) return f;
 		const ext = f.type === 'application/pdf' ? 'pdf' : (f.type.split('/')[1] ?? 'png');
-		return new File([f], `${pl.pastedName}.${ext}`, { type: f.type });
+		return new File([f], `${ui.pastedName}.${ext}`, { type: f.type });
 	}
 
 	async function loadPrinter() {
@@ -129,12 +129,12 @@
 		try {
 			const res = await fetch(`/api/preview/${draft}?sheet=${page}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
 			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			preview = data;
 			if (sheet > data.faces) sheet = data.faces;
 			error = '';
 		} catch (err) {
-			error = err instanceof Error ? err.message : pl.errors.generic;
+			error = err instanceof Error ? err.message : ui.errors.generic;
 		} finally {
 			previewBusy = false;
 		}
@@ -164,13 +164,13 @@
 		if (files.length === 0) return;
 		error = '';
 		busy = true;
-		fileName = files.length === 1 ? files[0].name : pl.photos(files.length);
+		fileName = files.length === 1 ? files[0].name : ui.photos(files.length);
 		try {
 			const body = new FormData();
 			for (const f of files) body.append('file', f);
 			const res = await fetch('/api/upload', { method: 'POST', body });
 			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			draft = data.draft;
 			items = data.items;
 			if (data.kind !== kind) choose(data.kind);
@@ -179,7 +179,7 @@
 			sheet = 1;
 			screen = 'opts';
 		} catch (err) {
-			error = err instanceof Error ? err.message : pl.errors.generic;
+			error = err instanceof Error ? err.message : ui.errors.generic;
 		} finally {
 			busy = false;
 		}
@@ -192,7 +192,7 @@
 		try {
 			const res = await fetch(`/api/claim/${encodeURIComponent(claim)}`, { method: 'POST' });
 			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			choose(data.kind);
 			draft = data.draft;
 			items = data.items;
@@ -202,7 +202,7 @@
 			sheet = 1;
 			screen = 'opts';
 		} catch (err) {
-			error = err instanceof Error ? err.message : pl.errors.generic;
+			error = err instanceof Error ? err.message : ui.errors.generic;
 		} finally {
 			busy = false;
 		}
@@ -214,11 +214,11 @@
 		try {
 			const res = await fetch('/api/telegram', { method: 'POST' });
 			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			// A t.me link opens the Telegram app on phones and Telegram Web elsewhere.
 			location.href = data.url;
 		} catch (err) {
-			error = err instanceof Error ? err.message : pl.errors.generic;
+			error = err instanceof Error ? err.message : ui.errors.generic;
 		} finally {
 			setTimeout(() => (tgBusy = false), 3000);
 		}
@@ -241,14 +241,14 @@
 		try {
 			const res = await fetch(`/api/sheets/${draft}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(pickNow) });
 			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			items = data.items;
 			book.pick = data.pick;
 			opts.range = '';
 			sheet = 1;
 			revision++;
 		} catch (err) {
-			error = err instanceof Error ? err.message : pl.errors.generic;
+			error = err instanceof Error ? err.message : ui.errors.generic;
 		} finally {
 			bookBusy = false;
 		}
@@ -261,13 +261,13 @@
 		try {
 			const res = await fetch(`/api/print/${draft}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(effective) });
 			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			result = data;
 			draft = null;
 			screen = 'pin';
 		} catch (err) {
-			error = err instanceof Error ? err.message : pl.errors.generic;
-			if (error === pl.errors.expiredDraft) draft = null;
+			error = err instanceof Error ? err.message : ui.errors.generic;
+			if (error === ui.errors.expiredDraft) draft = null;
 		} finally {
 			busy = false;
 		}
@@ -295,7 +295,7 @@
 				<div class="paper-img">
 					<img
 						src={preview.image}
-						alt={pl.previewPage(sheet, preview.faces)}
+						alt={ui.previewPage(sheet, preview.faces)}
 						onload={(e) => {
 							const img = e.currentTarget as HTMLImageElement;
 							landscape = img.naturalWidth > img.naturalHeight;
@@ -307,24 +307,24 @@
 		</div>
 		{#if preview && preview.faces > 1}
 			<div class="pager">
-				<button aria-label={pl.prevPage} disabled={sheet <= 1} onclick={() => sheet--}><Icon name="left" size={18} /></button>
-				<span>{pl.previewPage(sheet, preview.faces)}</span>
-				<button aria-label={pl.nextPage} disabled={sheet >= preview.faces} onclick={() => sheet++}><Icon name="right" size={18} /></button>
+				<button aria-label={ui.prevPage} disabled={sheet <= 1} onclick={() => sheet--}><Icon name="left" size={18} /></button>
+				<span>{ui.previewPage(sheet, preview.faces)}</span>
+				<button aria-label={ui.nextPage} disabled={sheet >= preview.faces} onclick={() => sheet++}><Icon name="right" size={18} /></button>
 			</div>
 		{/if}
 {/snippet}
 
 {#snippet trayNote()}
 	{#if printer && !printer.online}
-		<p class="note warn"><Icon name="alert" size={18} />{pl.printerOffline}</p>
+		<p class="note warn"><Icon name="alert" size={18} />{ui.printerOffline}</p>
 	{:else if usesBypass(effective.paper)}
-		<p class="note warn"><Icon name="info" size={18} />{pl.loadBypass(pl.papers[effective.paper].name)}{tray?.state === 'empty' ? ` ${pl.bypassEmpty}` : ''}</p>
+		<p class="note warn"><Icon name="info" size={18} />{ui.loadBypass(ui.papers[effective.paper].name)}{tray?.state === 'empty' ? ` ${ui.bypassEmpty}` : ''}</p>
 	{:else if tray?.state === 'empty'}
-		<p class="note bad"><Icon name="alert" size={18} />{pl.emptyTray(pl.trays[tray.key])}</p>
+		<p class="note bad"><Icon name="alert" size={18} />{ui.emptyTray(ui.trays[tray.key])}</p>
 	{:else if tray?.state === 'low'}
-		<p class="note warn"><Icon name="alert" size={18} />{pl.lowTray(pl.trays[tray.key])}</p>
+		<p class="note warn"><Icon name="alert" size={18} />{ui.lowTray(ui.trays[tray.key])}</p>
 	{:else if tray}
-		<p class="note info"><Icon name="info" size={18} />{pl.fromCassette(pl.trays[tray.key])}</p>
+		<p class="note info"><Icon name="info" size={18} />{ui.fromCassette(ui.trays[tray.key])}</p>
 	{/if}
 {/snippet}
 
@@ -340,17 +340,17 @@
 	<header class="bar">
 		<div class="bar-in">
 			{#if back[screen]}
-				<button class="back" onclick={() => (screen = back[screen]!)}><Icon name="left" size={18} />{pl.back}</button>
+				<button class="back" onclick={() => (screen = back[screen]!)}><Icon name="left" size={18} />{ui.back}</button>
 			{:else}
-				<span class="brand"><span class="logo"><Icon name="printer" size={18} /></span>{pl.appName}</span>
+				<span class="brand"><span class="logo"><Icon name="printer" size={18} /></span>{ui.appName}</span>
 			{/if}
 			<ol class="steps" aria-label="Kroki">
 				{#each order as s, i (s)}
-					<li class:done={i < order.indexOf(screen)} class:now={s === screen}><span>{i + 1}</span>{pl.stepNames[i]}</li>
+					<li class:done={i < order.indexOf(screen)} class:now={s === screen}><span>{i + 1}</span>{ui.stepNames[i]}</li>
 				{/each}
 			</ol>
 			{#if printer}
-				<span class="chip" class:off={!printer.online}><i></i>{pl.printerLabel}: {printer.online ? pl.printerOk : pl.printerOff}</span>
+				<span class="chip" class:off={!printer.online}><i></i>{ui.printerLabel}: {printer.online ? ui.printerOk : ui.printerOff}</span>
 			{/if}
 		</div>
 		<div class="progress" aria-hidden="true">
@@ -361,14 +361,14 @@
 	<main class="screen-{screen}">
 		{#if screen === 'start'}
 			<div class="hero">
-				<h1>{pl.startQuestion}</h1>
-				<p>{pl.tagline}</p>
+				<h1>{ui.startQuestion}</h1>
+				<p>{ui.tagline}</p>
 			</div>
 			<div class="presets">
 				{#each ['doc', 'photo'] as const as k (k)}
 					<button class="preset" onclick={() => choose(k)}>
 						<span class="ic"><Icon name={k === 'doc' ? 'file' : 'photo'} size={26} /></span>
-						<span class="ptext"><b>{pl.presets[k].name}</b><small>{pl.presets[k].hint}</small></span>
+						<span class="ptext"><b>{ui.presets[k].name}</b><small>{ui.presets[k].hint}</small></span>
 						<span class="go"><Icon name="right" size={20} /></span>
 					</button>
 				{/each}
@@ -377,30 +377,30 @@
 				<section class="card tg">
 					<span class="ic sm"><Icon name="send" size={20} /></span>
 					<div class="tg-text">
-						<h2>{pl.telegram.title}</h2>
-						<p>{pl.telegram.body}</p>
+						<h2>{ui.telegram.title}</h2>
+						<p>{ui.telegram.body}</p>
 					</div>
-					<button class="btn tg-btn" disabled={tgBusy} onclick={connectTelegram}><Icon name="send" size={18} />{tgBusy ? pl.telegram.opening : pl.telegram.connect}</button>
+					<button class="btn tg-btn" disabled={tgBusy} onclick={connectTelegram}><Icon name="send" size={18} />{tgBusy ? ui.telegram.opening : ui.telegram.connect}</button>
 					<div class="tg-safety">
 						<Icon name="shield" size={18} />
-						<ul>{#each pl.telegram.safety as p (p)}<li>{p}</li>{/each}</ul>
+						<ul>{#each ui.telegram.safety as p (p)}<li>{p}</li>{/each}</ul>
 					</div>
 				</section>
 			{/if}
 			<section class="card privacy">
-				<div class="ptitle"><span class="ic sm"><Icon name="shield" size={20} /></span><h2>{pl.privacy.title}</h2></div>
-				<ul>{#each pl.privacy.points(printer?.pinTtlMin ?? 60) as p (p)}<li>{p}</li>{/each}</ul>
+				<div class="ptitle"><span class="ic sm"><Icon name="shield" size={20} /></span><h2>{ui.privacy.title}</h2></div>
+				<ul>{#each ui.privacy.points(printer?.pinTtlMin ?? 60) as p (p)}<li>{p}</li>{/each}</ul>
 			</section>
 			{#if printer?.online}
 				<section class="card">
-					<h2 class="lbl">{pl.printerLabel}</h2>
+					<h2 class="lbl">{ui.printerLabel}</h2>
 					<TrayList trays={printer.trays} />
 					{#if printer.toner.length}
-						<h3 class="lbl sub">{pl.tonerLabel}</h3>
+						<h3 class="lbl sub">{ui.tonerLabel}</h3>
 						<div class="toners">
 							{#each toners as t (t.key)}
 								<div class="toner" class:low={t.level <= TONER_LOW}>
-									<span class="tname"><span class="dot {t.key}" aria-hidden="true"></span>{pl.toner[t.key]}</span>
+									<span class="tname"><span class="dot {t.key}" aria-hidden="true"></span>{ui.toner[t.key]}</span>
 									<span class="tbar" aria-hidden="true"><span class={t.key} style="width: {t.level}%"></span></span>
 									<b>{t.level}%</b>
 								</div>
@@ -411,8 +411,8 @@
 			{/if}
 		{:else if screen === 'file'}
 			<div class="hero">
-				<h1>{pl.pickFile[kind]}</h1>
-				<p>{pl.fileTypes[kind]}</p>
+				<h1>{ui.pickFile[kind]}</h1>
+				<p>{ui.fileTypes[kind]}</p>
 			</div>
 			<label
 				class="drop"
@@ -426,15 +426,15 @@
 				ondrop={drop}
 			>
 				<span class="ic big"><Icon name={busy ? 'printer' : 'upload'} size={30} /></span>
-				<b>{busy ? pl.converting : pl.pickFile[kind]}</b>
-				{#if !busy}<small>{pl.dropHint}</small>{/if}
+				<b>{busy ? ui.converting : ui.pickFile[kind]}</b>
+				{#if !busy}<small>{ui.dropHint}</small>{/if}
 				{#if kind === 'doc'}
 					<input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,application/pdf" onchange={upload} disabled={busy} />
 				{:else}
 					<input type="file" accept="image/jpeg,image/png" multiple onchange={upload} disabled={busy} />
 				{/if}
 			</label>
-			<button class="paste" disabled={busy} onclick={pasteButton}><Icon name="clipboard" size={18} />{pl.paste}</button>
+			<button class="paste" disabled={busy} onclick={pasteButton}><Icon name="clipboard" size={18} />{ui.paste}</button>
 		{:else if screen === 'opts'}
 			<div class="split">
 				<aside class="side">
@@ -442,28 +442,28 @@
 						<div class="filerow">
 							<span class="ic sm"><Icon name={kind === 'doc' ? 'file' : 'photo'} size={20} /></span>
 							<span class="fname"><b>{fileName}</b>{#if fileName !== fileKey}<small>{fileKey}</small>{/if}</span>
-							<button class="link" onclick={() => (screen = 'file')}>{pl.changeFile}</button>
+							<button class="link" onclick={() => (screen = 'file')}>{ui.changeFile}</button>
 						</div>
 						{@render previewBlock()}
-						<p class="hint">{pl.previewNote}</p>
-						{#if preview?.lowRes}<p class="note warn"><Icon name="alert" size={18} />{pl.lowRes}</p>{/if}
+						<p class="hint">{ui.previewNote}</p>
+						{#if preview?.lowRes}<p class="note warn"><Icon name="alert" size={18} />{ui.lowRes}</p>{/if}
 					</section>
 					<div class="cta desk">
-						{#if preview}<span class="total">{pl.total}: <b>{pl.sheets(preview.sheets)}</b></span>{/if}
-						<button class="btn" disabled={!rangeOk || !preview} onclick={() => (screen = 'sum')}>{pl.next}: {pl.summary.toLowerCase()}<Icon name="right" size={18} /></button>
+						{#if preview}<span class="total">{ui.total}: <b>{ui.sheets(preview.sheets)}</b></span>{/if}
+						<button class="btn" disabled={!rangeOk || !preview} onclick={() => (screen = 'sum')}>{ui.next}: {ui.summary.toLowerCase()}<Icon name="right" size={18} /></button>
 					</div>
 				</aside>
 
 				<div class="settings">
 					{#if book}
 						<section class="card">
-							<span class="lbl">{pl.sheetsTitle}</span>
+							<span class="lbl">{ui.sheetsTitle}</span>
 							<div class="books">
 								{#each picks as p (p.name)}
 									<div class="bsheet" class:on={p.on}>
 										<label class="bname"><input type="checkbox" bind:checked={p.on} /><span>{p.name}</span></label>
-										<input class="input" type="text" aria-label={pl.cellRangeFor(p.name)} placeholder={pl.cellRangePlaceholder} disabled={!p.on} bind:value={p.range} />
-										<button class="gridbtn" aria-label={pl.rangePick.open(p.name)} title={pl.rangePick.open(p.name)} disabled={!p.on} onclick={() => (picking = p.name)}><Icon name="grid" size={20} /></button>
+										<input class="input" type="text" aria-label={ui.cellRangeFor(p.name)} placeholder={ui.cellRangePlaceholder} disabled={!p.on} bind:value={p.range} />
+										<button class="gridbtn" aria-label={ui.rangePick.open(p.name)} title={ui.rangePick.open(p.name)} disabled={!p.on} onclick={() => (picking = p.name)}><Icon name="grid" size={20} /></button>
 									</div>
 								{/each}
 							</div>
@@ -471,137 +471,137 @@
 								{@const p = picks.find((x) => x.name === picking)!}
 								<RangePicker {draft} name={p.name} range={p.range} onpick={(range) => (p.range = range)} onclose={() => (picking = null)} />
 							{/if}
-							<p class="hint">{pl.cellRangeHint}</p>
-							<label class="toggle"><input type="checkbox" bind:checked={fitWide} /><span>{pl.fitWide}</span></label>
+							<p class="hint">{ui.cellRangeHint}</p>
+							<label class="toggle"><input type="checkbox" bind:checked={fitWide} /><span>{ui.fitWide}</span></label>
 							{#if pickDirty}
-								<button class="btn" disabled={bookBusy || !pickNow.sheets.length} onclick={applySheets}>{bookBusy ? pl.sheetsBusy : pl.sheetsApply}</button>
+								<button class="btn" disabled={bookBusy || !pickNow.sheets.length} onclick={applySheets}>{bookBusy ? ui.sheetsBusy : ui.sheetsApply}</button>
 							{/if}
 						</section>
 					{/if}
 					<section class="card">
 						<div class="row">
 							<div class="field">
-								<span class="lbl">{pl.copies}</span>
+								<span class="lbl">{ui.copies}</span>
 								<div class="stepper">
-									<button aria-label={pl.fewerCopies} onclick={() => (opts.copies = Math.max(1, opts.copies - 1))}><Icon name="minus" size={18} /></button>
+									<button aria-label={ui.fewerCopies} onclick={() => (opts.copies = Math.max(1, opts.copies - 1))}><Icon name="minus" size={18} /></button>
 									<output>{opts.copies}</output>
-									<button aria-label={pl.moreCopies} onclick={() => (opts.copies = Math.min(20, opts.copies + 1))}><Icon name="plus" size={18} /></button>
+									<button aria-label={ui.moreCopies} onclick={() => (opts.copies = Math.min(20, opts.copies + 1))}><Icon name="plus" size={18} /></button>
 								</div>
 							</div>
 							{#if kind === 'doc' && items > 1}
 								<label class="field grow">
-									<span class="lbl">{pl.range}</span>
-									<input id="range" class="input" type="text" inputmode="numeric" placeholder={pl.rangePlaceholder} bind:value={opts.range} />
+									<span class="lbl">{ui.range}</span>
+									<input id="range" class="input" type="text" inputmode="numeric" placeholder={ui.rangePlaceholder} bind:value={opts.range} />
 								</label>
 							{/if}
 						</div>
-						{#if !rangeOk}<p class="err">{pl.errors.rangeInvalid}</p>{/if}
+						{#if !rangeOk}<p class="err">{ui.errors.rangeInvalid}</p>{/if}
 					</section>
 
 					<section class="card grid2">
 						<div class="field">
-							<span class="lbl">{pl.size}</span>
+							<span class="lbl">{ui.size}</span>
 							{@render seg(['A5', 'A4', 'A3'] as const, opts.size, (v) => (opts.size = v), (v) => v)}
 						</div>
 						<div class="field">
-							<span class="lbl">{pl.color}</span>
-							{@render seg(['mono', 'color'] as const, opts.color, (v) => (opts.color = v), (v) => pl.colorOptions[v], (v) => v === 'color' && printer?.colorAllowed === false)}
-							{#if printer?.colorAllowed === false}<p class="hint">{pl.colorOff}</p>{/if}
+							<span class="lbl">{ui.color}</span>
+							{@render seg(['mono', 'color'] as const, opts.color, (v) => (opts.color = v), (v) => ui.colorOptions[v], (v) => v === 'color' && printer?.colorAllowed === false)}
+							{#if printer?.colorAllowed === false}<p class="hint">{ui.colorOff}</p>{/if}
 						</div>
 					</section>
 
 					<section class="card grid2">
 						<div class="field">
-							<span class="lbl">{pl.nup[kind]}</span>
+							<span class="lbl">{ui.nup[kind]}</span>
 							{@render seg(NUP_CHOICES[kind], effective.nup, (v) => (opts.nup = v), (v) => String(v))}
 						</div>
 						{#if kind === 'photo'}
 							<div class="field">
-								<span class="lbl">{pl.fit}</span>
-								{@render seg(['fit', 'fill'] as const, opts.fit, (v) => (opts.fit = v), (v) => pl.fitOptions[v])}
-								<p class="hint">{pl.fitHint[opts.fit]}</p>
+								<span class="lbl">{ui.fit}</span>
+								{@render seg(['fit', 'fill'] as const, opts.fit, (v) => (opts.fit = v), (v) => ui.fitOptions[v])}
+								<p class="hint">{ui.fitHint[opts.fit]}</p>
 							</div>
 							<div class="field wide">
-								<span class="lbl">{pl.orientation}</span>
-								{@render seg(['auto', 'portrait', 'landscape'] as const, opts.orientation, (v) => (opts.orientation = v), (v) => pl.orientationOptions[v])}
-								<p class="hint">{pl.orientationHint[opts.orientation]}</p>
+								<span class="lbl">{ui.orientation}</span>
+								{@render seg(['auto', 'portrait', 'landscape'] as const, opts.orientation, (v) => (opts.orientation = v), (v) => ui.orientationOptions[v])}
+								<p class="hint">{ui.orientationHint[opts.orientation]}</p>
 							</div>
 						{/if}
 						<div class="field wide">
-							<span class="lbl">{pl.margin}</span>
-							{@render seg(MARGINS, opts.margin, (v) => (opts.margin = v), (v) => pl.marginLabel(v))}
-							<p class="hint">{pl.marginHint}</p>
+							<span class="lbl">{ui.margin}</span>
+							{@render seg(MARGINS, opts.margin, (v) => (opts.margin = v), (v) => ui.marginLabel(v))}
+							<p class="hint">{ui.marginHint}</p>
 						</div>
 						<div class="field wide">
-							<span class="lbl">{pl.duplex}</span>
-							{@render seg(['off', 'long', 'short'] as const, effective.duplex, (v) => (opts.duplex = v), (v) => pl.duplexOptions[v], (v) => v !== 'off' && usesBypass(opts.paper))}
-							<p class="hint">{usesBypass(opts.paper) ? pl.duplexThick : pl.duplexHint[effective.duplex]}</p>
+							<span class="lbl">{ui.duplex}</span>
+							{@render seg(['off', 'long', 'short'] as const, effective.duplex, (v) => (opts.duplex = v), (v) => ui.duplexOptions[v], (v) => v !== 'off' && usesBypass(opts.paper))}
+							<p class="hint">{usesBypass(opts.paper) ? ui.duplexThick : ui.duplexHint[effective.duplex]}</p>
 						</div>
 					</section>
 
 					<section class="card">
-						<span class="lbl">{pl.paper}</span>
+						<span class="lbl">{ui.paper}</span>
 						<div class="papers">
 							{#each shownPapers as p (p)}
 								<button class="paper" aria-pressed={opts.paper === p} onclick={() => (opts.paper = p)}>
 									<span class="sw" class:special={!PAPER_GSM[p]} style="height: {PAPER_GSM[p] ? 6 + PAPERS.indexOf(p) * 3.5 : 6}px" aria-hidden="true"></span>
-									<span class="ptext"><b>{pl.papers[p].name}</b><small>{[pl.gsm(PAPER_GSM[p]), pl.papers[p].use].filter(Boolean).join(' · ')}</small></span>
+									<span class="ptext"><b>{ui.papers[p].name}</b><small>{[ui.gsm(PAPER_GSM[p]), ui.papers[p].use].filter(Boolean).join(' · ')}</small></span>
 									{#if opts.paper === p}<span class="tick"><Icon name="check" size={16} /></span>{/if}
 								</button>
 							{/each}
 						</div>
 						<button class="more" aria-expanded={allPapers} onclick={() => (morePapers = !allPapers)}>
-							<Icon name={allPapers ? 'minus' : 'plus'} size={16} />{allPapers ? pl.fewerPapers : pl.morePapers(PAPERS.length - COMMON_PAPERS.length)}
+							<Icon name={allPapers ? 'minus' : 'plus'} size={16} />{allPapers ? ui.fewerPapers : ui.morePapers(PAPERS.length - COMMON_PAPERS.length)}
 						</button>
 						{@render trayNote()}
 					</section>
 
 					<div class="cta mob">
-						<button class="btn" disabled={!rangeOk || !preview} onclick={() => (screen = 'sum')}>{pl.next}: {pl.summary.toLowerCase()}<Icon name="right" size={18} /></button>
+						<button class="btn" disabled={!rangeOk || !preview} onclick={() => (screen = 'sum')}>{ui.next}: {ui.summary.toLowerCase()}<Icon name="right" size={18} /></button>
 					</div>
 				</div>
 			</div>
 		{:else if screen === 'sum'}
-			<div class="hero"><h1>{pl.summary}</h1></div>
+			<div class="hero"><h1>{ui.summary}</h1></div>
 			<div class="split sum-split">
 				<section class="card">{@render previewBlock()}</section>
 				<div class="narrow">
 					<section class="card sum">
-						<div><span>{pl.file}</span><b>{fileName}</b></div>
-						{#if kind === 'doc'}<div><span>{pl.range}</span><b>{effective.range || pl.allPages}</b></div>{/if}
-						<div><span>{pl.copies}</span><b>{effective.copies}</b></div>
-						<div><span>{pl.size}</span><b>{effective.size}</b></div>
-						<div><span>{pl.color}</span><b>{pl.colorOptions[effective.color]}</b></div>
-						<div><span>{pl.print}</span><b>{pl.duplexSummary[effective.duplex]}</b></div>
-						<div><span>{pl.nup[kind]}</span><b>{effective.nup}</b></div>
-						<div><span>{pl.paper}</span><b>{[pl.papers[effective.paper].name, pl.gsm(PAPER_GSM[effective.paper])].filter(Boolean).join(' · ')}</b></div>
-						{#if tray}<div><span>{pl.tray}</span><b>{pl.trays[tray.key]}</b></div>{/if}
-						<div class="tot"><span>{pl.total}</span><b>{pl.sheets(preview?.sheets ?? 0)}</b></div>
+						<div><span>{ui.file}</span><b>{fileName}</b></div>
+						{#if kind === 'doc'}<div><span>{ui.range}</span><b>{effective.range || ui.allPages}</b></div>{/if}
+						<div><span>{ui.copies}</span><b>{effective.copies}</b></div>
+						<div><span>{ui.size}</span><b>{effective.size}</b></div>
+						<div><span>{ui.color}</span><b>{ui.colorOptions[effective.color]}</b></div>
+						<div><span>{ui.print}</span><b>{ui.duplexSummary[effective.duplex]}</b></div>
+						<div><span>{ui.nup[kind]}</span><b>{effective.nup}</b></div>
+						<div><span>{ui.paper}</span><b>{[ui.papers[effective.paper].name, ui.gsm(PAPER_GSM[effective.paper])].filter(Boolean).join(' · ')}</b></div>
+						{#if tray}<div><span>{ui.tray}</span><b>{ui.trays[tray.key]}</b></div>{/if}
+						<div class="tot"><span>{ui.total}</span><b>{ui.sheets(preview?.sheets ?? 0)}</b></div>
 					</section>
 					{@render trayNote()}
-					<button class="btn" disabled={busy} onclick={send}><Icon name="lock" size={18} />{busy ? pl.sending : pl.send}</button>
-					<p class="hint center">{pl.waitsForPin}</p>
+					<button class="btn" disabled={busy} onclick={send}><Icon name="lock" size={18} />{busy ? ui.sending : ui.send}</button>
+					<p class="hint center">{ui.waitsForPin}</p>
 				</div>
 			</div>
 		{:else if screen === 'pin' && result}
 			<div class="narrow">
 				<section class="card pinbox">
 					<span class="ok-badge"><Icon name="check" size={22} /></span>
-					<h1>{pl.collect}</h1>
+					<h1>{ui.collect}</h1>
 					<div class="codes">
-						<div><span class="lbl">{pl.jobId}</span><span class="pin">{result.id}</span></div>
-						<div><span class="lbl">{pl.pin}</span><span class="pin">{result.pin.slice(0, 3)} {result.pin.slice(3)}</span></div>
+						<div><span class="lbl">{ui.jobId}</span><span class="pin">{result.id}</span></div>
+						<div><span class="lbl">{ui.pin}</span><span class="pin">{result.pin.slice(0, 3)} {result.pin.slice(3)}</span></div>
 					</div>
-					{#if left > 0}<span class="timer">{pl.validFor(mmss)}</span>{:else}<span class="err">{pl.expired}</span>{/if}
+					{#if left > 0}<span class="timer">{ui.validFor(mmss)}</span>{:else}<span class="err">{ui.expired}</span>{/if}
 				</section>
-				{#if result.telegram}<p class="note info"><Icon name="send" size={18} />{pl.telegram.pinSent}</p>{/if}
+				{#if result.telegram}<p class="note info"><Icon name="send" size={18} />{ui.telegram.pinSent}</p>{/if}
 				<section class="card">
-					<span class="lbl">{pl.atPrinter}</span>
-					<ol class="how">{#each pl.steps as s (s)}<li>{s}</li>{/each}</ol>
-					<p class="hint">{pl.secureNote}</p>
+					<span class="lbl">{ui.atPrinter}</span>
+					<ol class="how">{#each ui.steps as s (s)}<li>{s}</li>{/each}</ol>
+					<p class="hint">{ui.secureNote}</p>
 				</section>
-				{#if usesBypass(effective.paper)}<p class="note warn"><Icon name="info" size={18} />{pl.loadBypass(pl.papers[effective.paper].name)}</p>{/if}
-				<button class="btn sec" onclick={restart}>{pl.printAnother}</button>
+				{#if usesBypass(effective.paper)}<p class="note warn"><Icon name="info" size={18} />{ui.loadBypass(ui.papers[effective.paper].name)}</p>{/if}
+				<button class="btn sec" onclick={restart}>{ui.printAnother}</button>
 			</div>
 		{/if}
 

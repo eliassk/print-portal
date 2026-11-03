@@ -4,7 +4,7 @@ import { passwordMatches, signAdmin, verifyAdmin } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { startOfDay } from '$lib/server/limits';
 import { printerStatus } from '$lib/server/status';
-import { pl } from '$lib/i18n/pl';
+import { ui } from '$lib/i18n';
 import type { Actions, PageServerLoad } from './$types';
 
 const COOKIE = 'admin';
@@ -29,7 +29,7 @@ export const actions: Actions = {
 	login: async ({ request, cookies }) => {
 		if (!enabled()) return fail(403);
 		const password = String((await request.formData()).get('password') ?? '');
-		if (!passwordMatches(password, config.adminPassword)) return fail(401, { error: pl.admin.wrongPassword });
+		if (!passwordMatches(password, config.adminPassword)) return fail(401, { error: ui.admin.wrongPassword });
 		cookies.set(COOKIE, signAdmin(config.adminSecret), { path: '/admin', httpOnly: true, sameSite: 'strict', secure: false, maxAge: 12 * 3600 });
 		redirect(303, '/admin');
 	},

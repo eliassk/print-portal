@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pl } from '$lib/i18n/pl';
+	import { ui } from '$lib/i18n';
 	import type { Tray } from '$lib/status';
 	let { trays, compact = false }: { trays: Tray[]; compact?: boolean } = $props();
 </script>
@@ -7,7 +7,7 @@
 <div class="trays" class:compact>
 	{#each trays as t (t.key)}
 		<div class="tray">
-			<div class="head"><b>{pl.trays[t.key]}</b><span class="pill {t.state}">{pl.trayStates[t.state]}</span></div>
+			<div class="head"><b>{ui.trays[t.key]}</b><span class="pill {t.state}">{ui.trayStates[t.state]}</span></div>
 			<div class="bar" aria-hidden="true"><i class={t.state} style="width: {t.level ?? 0}%"></i></div>
 			{#if t.size}<small>{t.size}</small>{/if}
 		</div>

@@ -1,80 +1,80 @@
 <script lang="ts">
 	import Icon from '$lib/Icon.svelte';
-	import { pl } from '$lib/i18n/pl';
+	import { dateLocale, ui } from '$lib/i18n';
 	import TrayList from '$lib/TrayList.svelte';
 	let { data, form } = $props();
 
-	const time = (t: number) => new Date(t).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+	const time = (t: number) => new Date(t).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
 </script>
 
-<svelte:head><title>{pl.admin.title} · {pl.appName}</title></svelte:head>
+<svelte:head><title>{ui.admin.title} · {ui.appName}</title></svelte:head>
 
 {#if data.state !== 'in'}
 	<div class="gate">
 		<div class="gate-card">
 			<span class="logo"><Icon name="lock" size={24} /></span>
-			<h1>{pl.admin.title}</h1>
-			<p class="muted">{pl.admin.loginHint}</p>
+			<h1>{ui.admin.title}</h1>
+			<p class="muted">{ui.admin.loginHint}</p>
 			{#if data.state === 'disabled'}
-				<p class="note">{pl.admin.disabled}</p>
+				<p class="note">{ui.admin.disabled}</p>
 			{:else}
 				<form method="POST" action="?/login" class="login">
-					<label for="password">{pl.admin.password}</label>
+					<label for="password">{ui.admin.password}</label>
 					<input id="password" name="password" type="password" autocomplete="current-password" required />
 					{#if form?.error}<p class="err">{form.error}</p>{/if}
-					<button class="btn">{pl.admin.login}</button>
+					<button class="btn">{ui.admin.login}</button>
 				</form>
 			{/if}
-			<a class="back" href="/"><Icon name="left" size={16} />{pl.admin.backToPortal}</a>
+			<a class="back" href="/"><Icon name="left" size={16} />{ui.admin.backToPortal}</a>
 		</div>
 	</div>
 {:else}
 <main>
 	<header>
-		<h1>{pl.admin.title}</h1>
-		<form method="POST" action="?/logout"><button class="link">{pl.admin.logout}</button></form>
+		<h1>{ui.admin.title}</h1>
+		<form method="POST" action="?/logout"><button class="link">{ui.admin.logout}</button></form>
 	</header>
 
 		<section class="card">
-			<h2>{pl.admin.printer}</h2>
+			<h2>{ui.admin.printer}</h2>
 			{#if data.status.online}
 				<TrayList trays={data.status.trays} />
-				<h3>{pl.admin.toner}</h3>
+				<h3>{ui.admin.toner}</h3>
 				<div class="toner">
 					{#each data.status.toner as t (t.key)}
-						<div><b class:low={t.level <= 15}>{t.level}%</b>{pl.toner[t.key]}</div>
+						<div><b class:low={t.level <= 15}>{t.level}%</b>{ui.toner[t.key]}</div>
 					{/each}
 				</div>
 			{:else}
-				<p class="err">{pl.admin.offline}</p>
+				<p class="err">{ui.admin.offline}</p>
 			{/if}
 		</section>
 
 		<form method="POST" action="?/save" class="card">
-			<h2>{pl.admin.settings}</h2>
-			<label class="row"><span>{pl.admin.colorAllowed}</span><input type="checkbox" name="colorAllowed" checked={data.settings.colorAllowed} /></label>
-			<label class="row"><span>{pl.admin.dailyPages}</span><input type="number" name="dailyPages" min="1" max="1000" value={data.settings.dailyPages} /></label>
-			<label class="row"><span>{pl.admin.maxPages}</span><input type="number" name="maxPages" min="1" max="500" value={data.settings.maxPages} /></label>
-			<div class="row"><button class="btn">{pl.admin.save}</button>{#if form?.saved}<span class="ok">{pl.admin.saved}</span>{/if}</div>
+			<h2>{ui.admin.settings}</h2>
+			<label class="row"><span>{ui.admin.colorAllowed}</span><input type="checkbox" name="colorAllowed" checked={data.settings.colorAllowed} /></label>
+			<label class="row"><span>{ui.admin.dailyPages}</span><input type="number" name="dailyPages" min="1" max="1000" value={data.settings.dailyPages} /></label>
+			<label class="row"><span>{ui.admin.maxPages}</span><input type="number" name="maxPages" min="1" max="500" value={data.settings.maxPages} /></label>
+			<div class="row"><button class="btn">{ui.admin.save}</button>{#if form?.saved}<span class="ok">{ui.admin.saved}</span>{/if}</div>
 		</form>
 
 		<section class="card">
-			<h2>{pl.admin.recent}</h2>
-			<p class="muted">{pl.admin.today}: {pl.admin.todayTotals(data.today.jobs, data.today.sheets)}</p>
+			<h2>{ui.admin.recent}</h2>
+			<p class="muted">{ui.admin.today}: {ui.admin.todayTotals(data.today.jobs, data.today.sheets)}</p>
 			{#if data.recent.length === 0}
-				<p class="muted">{pl.admin.noJobs}</p>
+				<p class="muted">{ui.admin.noJobs}</p>
 			{:else}
 				<div class="tw">
 					<table>
-						<thead><tr><th>{pl.admin.cols.time}</th><th>{pl.admin.cols.id}</th><th>{pl.admin.cols.sheets}</th><th>{pl.admin.cols.paper}</th><th>{pl.admin.cols.state}</th></tr></thead>
+						<thead><tr><th>{ui.admin.cols.time}</th><th>{ui.admin.cols.id}</th><th>{ui.admin.cols.sheets}</th><th>{ui.admin.cols.paper}</th><th>{ui.admin.cols.state}</th></tr></thead>
 						<tbody>
 							{#each data.recent as j (j.at + j.jobId)}
 								<tr>
 									<td>{time(j.at)}</td>
 									<td>{j.jobId}</td>
 									<td>{j.sheets}</td>
-									<td>{j.size} · {pl.papers[j.paper as keyof typeof pl.papers]?.name ?? j.paper} · {pl.colorOptions[j.color as 'mono' | 'color']}</td>
-									<td><span class="pill" class:wait={j.expires > data.now}>{j.expires > data.now ? pl.admin.waiting : pl.admin.gone}</span></td>
+									<td>{j.size} · {ui.papers[j.paper as keyof typeof ui.papers]?.name ?? j.paper} · {ui.colorOptions[j.color as 'mono' | 'color']}</td>
+									<td><span class="pill" class:wait={j.expires > data.now}>{j.expires > data.now ? ui.admin.waiting : ui.admin.gone}</span></td>
 								</tr>
 							{/each}
 						</tbody>
@@ -82,7 +82,7 @@
 				</div>
 			{/if}
 		</section>
-		<p><a href="/karta">{pl.admin.card}</a></p>
+		<p><a href="/karta">{ui.admin.card}</a></p>
 </main>
 {/if}
 

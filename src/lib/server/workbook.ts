@@ -1,5 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { z } from 'zod';
+import { ui } from '../i18n/index.ts';
 
 /** A visible worksheet and the cells that actually hold data, e.g. "A1:H42". Null when empty. */
 export type SheetInfo = { name: string; range: string | null };
@@ -251,7 +252,7 @@ export function readGrid(xlsx: Uint8Array, name: string): Grid {
 		const text =
 			t === 's' ? (strings[Number(v)] ?? '')
 			: t === 'inlineStr' ? unescape([...m[2].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join(''))
-			: t === 'b' ? (v === '1' ? 'PRAWDA' : 'FAŁSZ')
+			: t === 'b' ? (v === '1' ? ui.rangePick.yes : ui.rangePick.no)
 			: t === 'str' || t === 'e' ? v
 			: dates.has(Number(attr(m[1], 's') ?? 0)) ? showDate(v, dates.get(Number(attr(m[1], 's') ?? 0))!, date1904)
 			: showNumber(v);

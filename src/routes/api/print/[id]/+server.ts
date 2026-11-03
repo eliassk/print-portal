@@ -8,20 +8,20 @@ import { sendRaw } from '$lib/server/printer';
 import { newId, newPin } from '$lib/server/secret';
 import { notifyPrinted } from '$lib/server/telegram';
 import { normalize, PrintOptions, sheetCount } from '$lib/options';
-import { pl } from '$lib/i18n/pl';
+import { ui } from '$lib/i18n';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const parsed = PrintOptions.safeParse(await request.json().catch(() => null));
-	if (!parsed.success) return json({ error: pl.errors.generic }, { status: 400 });
+	if (!parsed.success) return json({ error: ui.errors.generic }, { status: 400 });
 	const draft = getDraft(params.id, locals.device);
-	if (!draft) return json({ error: pl.errors.expiredDraft }, { status: 404 });
+	if (!draft) return json({ error: ui.errors.expiredDraft }, { status: 404 });
 	const o = normalize(parsed.data, draft.kind);
 	let composed;
 	try {
 		composed = await composeDraft(draft, o);
 	} catch (e) {
-		if (e instanceof RangeError) return json({ error: pl.errors.rangeInvalid }, { status: 400 });
+		if (e instanceof RangeError) return json({ error: ui.errors.rangeInvalid }, { status: 400 });
 		throw e;
 	}
 
@@ -31,10 +31,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const refused = checkJob(db, db.settings(), locals.device, sheets, composed.items, o.color, now);
 	if (refused) {
 		const msg =
-			refused.reason === 'rate' ? pl.errors.rate
-			: refused.reason === 'daily' ? pl.errors.daily(refused.left)
-			: refused.reason === 'color' ? pl.errors.colorOff
-			: pl.errors.tooManyPages(refused.max);
+			refused.reason === 'rate' ? ui.errors.rate
+			: refused.reason === 'daily' ? ui.errors.daily(refused.left)
+			: refused.reason === 'color' ? ui.errors.colorOff
+			: ui.errors.tooManyPages(refused.max);
 		return json({ error: msg }, { status: 429 });
 	}
 
@@ -44,7 +44,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		await sendRaw(config.printerHost, config.printerPort, buildSecureJob({ id, pin, options: o }, composed.pdf));
 	} catch (e) {
 		console.error('Printer send failed', e);
-		return json({ error: pl.errors.printer }, { status: 502 });
+		return json({ error: ui.errors.printer }, { status: 502 });
 	}
 	const expires = now + config.pinTtlMin * 60 * 1000;
 	db.addJob({ at: now, jobId: id, device: locals.device, sheets, size: o.size, paper: o.paper, color: o.color, expires });

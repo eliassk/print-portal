@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { pl } from '$lib/i18n/pl';
+	import { ui } from '$lib/i18n';
 
 	type Grid = { cols: number; rows: number; cells: string[][]; clipped: boolean };
 	type Box = { c1: number; r1: number; c2: number; r2: number };
@@ -87,10 +87,10 @@
 
 <svelte:window onpointerup={() => (dragging = false)} />
 
-<dialog bind:this={dialog} class="picker" onclose={onclose} aria-label={pl.rangePick.title(name)}>
+<dialog bind:this={dialog} class="picker" onclose={onclose} aria-label={ui.rangePick.title(name)}>
 	<header>
-		<h2>{pl.rangePick.title(name)}</h2>
-		<p>{touch ? pl.rangePick.hintTouch : pl.rangePick.hintMouse}</p>
+		<h2>{ui.rangePick.title(name)}</h2>
+		<p>{touch ? ui.rangePick.hintTouch : ui.rangePick.hintMouse}</p>
 	</header>
 	<div class="scroll" class:dragging>
 		{#if grid}
@@ -122,20 +122,20 @@
 				</tbody>
 			</table>
 		{:else if failed}
-			<p class="msg">{pl.errors.generic}</p>
+			<p class="msg">{ui.errors.generic}</p>
 		{:else}
-			<p class="msg">{pl.sheetsBusy}</p>
+			<p class="msg">{ui.sheetsBusy}</p>
 		{/if}
 	</div>
-	{#if grid?.clipped}<p class="note">{pl.rangePick.clipped}</p>{/if}
+	{#if grid?.clipped}<p class="note">{ui.rangePick.clipped}</p>{/if}
 	<footer>
 		<div class="sel">
 			<b>{text || '—'}</b>
-			{#if box}<span>{pl.rangePick.cells(box.c2 - box.c1 + 1, box.r2 - box.r1 + 1)}</span>{/if}
+			{#if box}<span>{ui.rangePick.cells(box.c2 - box.c1 + 1, box.r2 - box.r1 + 1)}</span>{/if}
 		</div>
-		<button class="btn sec" onclick={() => { onpick(''); dialog.close(); }}>{pl.rangePick.whole}</button>
-		<button class="btn sec" onclick={() => dialog.close()}>{pl.rangePick.cancel}</button>
-		<button class="btn" disabled={!box} onclick={() => { onpick(text); dialog.close(); }}>{pl.rangePick.ok}</button>
+		<button class="btn sec" onclick={() => { onpick(''); dialog.close(); }}>{ui.rangePick.whole}</button>
+		<button class="btn sec" onclick={() => dialog.close()}>{ui.rangePick.cancel}</button>
+		<button class="btn" disabled={!box} onclick={() => { onpick(text); dialog.close(); }}>{ui.rangePick.ok}</button>
 	</footer>
 </dialog>
 

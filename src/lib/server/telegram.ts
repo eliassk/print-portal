@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { env } from '$env/dynamic/private';
-import { pl } from '../i18n/pl.ts';
+import { dateLocale, ui } from '$lib/i18n';
 import { getDb } from './app.ts';
 import { config } from './config.ts';
 import { intake } from './intake.ts';
@@ -90,33 +90,33 @@ async function handle(token: string, m: Message) {
 	const chat = m.chat.id;
 	const start = m.text?.match(/^\/start(?:@\w+)?\s+([\w-]{10,64})$/);
 	if (start) {
-		if (!useLink(start[1])) return reply(token, chat, pl.bot.linkGone(config.portalUrl));
+		if (!useLink(start[1])) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
 		getDb().authorizeChat(chat, Date.now());
-		return reply(token, chat, pl.bot.connected(AUTH_DAYS, BOT_DRAFT_TTL_MIN));
+		return reply(token, chat, ui.bot.connected(AUTH_DAYS, BOT_DRAFT_TTL_MIN));
 	}
 	if (/^\/stop\b/.test(m.text ?? '')) {
 		getDb().forgetChat(chat);
-		return reply(token, chat, pl.bot.stopped);
+		return reply(token, chat, ui.bot.stopped);
 	}
 	// Unknown chats get nothing downloaded or saved.
-	if (!isAuthorized(chat)) return reply(token, chat, pl.bot.notConnected(config.portalUrl));
+	if (!isAuthorized(chat)) return reply(token, chat, ui.bot.notConnected(config.portalUrl));
 	const file = pickFile(m);
-	if (!file) return reply(token, chat, pl.bot.hello);
-	if (!allowFile(chat, Date.now())) return reply(token, chat, pl.bot.rate);
-	if ((file.file_size ?? 0) > Math.min(TELEGRAM_MAX_BYTES, config.maxUploadBytes)) return reply(token, chat, pl.bot.tooBig);
+	if (!file) return reply(token, chat, ui.bot.hello);
+	if (!allowFile(chat, Date.now())) return reply(token, chat, ui.bot.rate);
+	if ((file.file_size ?? 0) > Math.min(TELEGRAM_MAX_BYTES, config.maxUploadBytes)) return reply(token, chat, ui.bot.tooBig);
 
 	const info = await call<{ file_path?: string }>(token, 'getFile', { file_id: file.file_id });
-	if (!info.file_path) return reply(token, chat, pl.bot.tooBig);
+	if (!info.file_path) return reply(token, chat, ui.bot.tooBig);
 	const res = await fetch(`${API}/file/bot${token}/${info.file_path}`);
 	if (!res.ok) throw new Error(`Telegram download: ${res.status}`);
 	const data = new Uint8Array(await res.arrayBuffer());
 
 	const result = await intake([{ name: file.file_name, data }]);
-	if (!result.ok) return reply(token, chat, pl.errors[result.error]);
+	if (!result.ok) return reply(token, chat, ui.errors[result.error]);
 	const max = getDb().settings().maxPages;
-	if (result.items > max) return reply(token, chat, pl.errors.tooManyPages(max));
+	if (result.items > max) return reply(token, chat, ui.errors.tooManyPages(max));
 	const claim = await saveClaimable(result.kind, result.data, result.items, result.workbook, file.file_name, chat);
-	return reply(token, chat, pl.bot.ready(file.file_name, `${config.portalUrl.replace(/\/$/, '')}/?d=${claim}`, BOT_DRAFT_TTL_MIN));
+	return reply(token, chat, ui.bot.ready(file.file_name, `${config.portalUrl.replace(/\/$/, '')}/?d=${claim}`, BOT_DRAFT_TTL_MIN));
 }
 
 /**
@@ -126,8 +126,8 @@ async function handle(token: string, m: Message) {
 export async function notifyPrinted(chat: number, job: { id: string; pin: string; expires: number; name: string; sheets: number }) {
 	if (!config.telegramToken) return;
 	getDb().renewChat(chat, Date.now());
-	const until = new Date(job.expires).toLocaleTimeString('pl-PL', { timeZone: config.timeZone, hour: '2-digit', minute: '2-digit' });
-	await reply(config.telegramToken, chat, pl.bot.printed({ ...job, until }));
+	const until = new Date(job.expires).toLocaleTimeString(dateLocale, { timeZone: config.timeZone, hour: '2-digit', minute: '2-digit' });
+	await reply(config.telegramToken, chat, ui.bot.printed({ ...job, until }));
 }
 
 let running = false;
@@ -159,7 +159,7 @@ export function startBot() {
 					if (!u.message) continue;
 					await handle(token, u.message).catch((e) => {
 						console.error(e);
-						return reply(token, u.message!.chat.id, pl.errors.generic);
+						return reply(token, u.message!.chat.id, ui.errors.generic);
 					});
 				}
 			} catch (e) {

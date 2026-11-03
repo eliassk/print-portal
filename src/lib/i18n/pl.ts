@@ -4,7 +4,7 @@ import type { Toner, Tray, TrayState } from '../status.ts';
 const plural = (n: number, one: string, few: string, many: string) =>
 	n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
 
-/** Every text the user sees. English MAY be added later as a second file with the same keys. */
+/** Polish texts. en.ts MUST keep the same keys. */
 export const pl = {
 	appName: 'Portal druku',
 	back: 'Wstecz',
@@ -66,7 +66,9 @@ export const pl = {
 		clipped: 'Pokazujemy początek arkusza. Dalsze komórki wpisz ręcznie.',
 		whole: 'Cały arkusz',
 		cancel: 'Anuluj',
-		ok: 'Wybierz'
+		ok: 'Wybierz',
+		yes: 'PRAWDA',
+		no: 'FAŁSZ'
 	},
 	fitWide: 'Dopasuj do szerokości strony',
 	sheetsApply: 'Zastosuj',
