@@ -1,5 +1,5 @@
 // Stage 0: sends one PDF as a Secure Print job, to prove release at the panel.
-// Usage: pnpm send-secure <file.pdf> [--id 203] [--pin 2030] [--mono] [--duplex long|short] [--a3] [--copies 2] [--paper thick2] [--dry]
+// Usage: pnpm send-secure <file.pdf> [--id 203] [--pin 2030] [--mono] [--duplex long|short] [--a3] [--copies 2] [--paper thick2] [--host 192.168.1.50] [--dry]
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { PAPERS, type Paper } from '../src/lib/options.ts';
@@ -16,7 +16,7 @@ const { values, positionals } = parseArgs({
 		a3: { type: 'boolean', default: false },
 		copies: { type: 'string', default: '1' },
 		paper: { type: 'string', default: 'plain' },
-		host: { type: 'string', default: process.env.PRINTER_HOST ?? '10.134.13.10' },
+		host: { type: 'string', default: process.env.PRINTER_HOST },
 		port: { type: 'string', default: process.env.PRINTER_PORT ?? '9100' },
 		dry: { type: 'boolean', default: false }
 	}
@@ -24,7 +24,7 @@ const { values, positionals } = parseArgs({
 
 const file = positionals[0];
 if (!file) {
-	console.error('Usage: pnpm send-secure <file.pdf> [--id 203] [--pin 2030] [--mono] [--duplex long|short] [--a3] [--paper thick2] [--dry]');
+	console.error('Usage: pnpm send-secure <file.pdf> [--id 203] [--pin 2030] [--mono] [--duplex long|short] [--a3] [--paper thick2] [--host 192.168.1.50] [--dry]');
 	process.exit(1);
 }
 if (!PAPERS.includes(values.paper as Paper)) {
@@ -56,6 +56,10 @@ if (values.dry) {
 	await writeFile('secure-job.prn', job);
 	console.log('Wrote secure-job.prn, nothing sent.');
 } else {
+	if (!values.host) {
+		console.error('Set PRINTER_HOST or pass --host <printer address>.');
+		process.exit(1);
+	}
 	await sendRaw(values.host, Number(values.port), job);
 	console.log(`Sent to ${values.host}:${values.port}. At the panel: Skrzynka → System → Wydruk bezpieczny, ID ${values.id}, PIN ${values.pin}.`);
 }

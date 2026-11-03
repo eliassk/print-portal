@@ -2,7 +2,7 @@
 #   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
 #
 # Caddy gets its own LAN address (ipvlan), so it owns ports 80 and 443 there even when the
-# VM's own ports are taken (UISP holds 0.0.0.0:80 and :443 on mediacontrol-vm).
+# VM's own ports are taken (e.g. another app already holds 0.0.0.0:80 and :443).
 services:
   print-portal:
     # Only Caddy talks to the app; the plain HTTP port is closed.
