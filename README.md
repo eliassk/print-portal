@@ -1,6 +1,6 @@
 # Print Portal
 
-[![CI](https://github.com/eliassk/konfero-printer/actions/workflows/ci.yml/badge.svg)](https://github.com/eliassk/konfero-printer/actions/workflows/ci.yml)
+[![CI](https://github.com/eliassk/print-portal/actions/workflows/ci.yml/badge.svg)](https://github.com/eliassk/print-portal/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Walk-up printing for a shared office printer, without installing drivers. People scan a QR code next to the printer, upload a file from their phone or laptop, check the preview, and get a job ID and PIN. The job waits on the printer until they type the PIN at the panel (Secure Print), so nobody else picks up their pages.
@@ -27,7 +27,7 @@ The interface is in Polish. Strings live in [`src/lib/i18n/pl.ts`](src/lib/i18n/
 You need a Linux machine on the same network as the printer, with Docker and Docker Compose.
 
 ```bash
-git clone https://github.com/eliassk/konfero-printer.git print-portal
+git clone https://github.com/eliassk/print-portal.git print-portal
 cd print-portal
 cp .env.example .env   # set PRINTER_HOST, LAN_IP and PORTAL_URL at least
 docker compose up -d --build
