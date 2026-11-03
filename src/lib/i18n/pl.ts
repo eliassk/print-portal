@@ -130,6 +130,8 @@ export const pl = {
 	atPrinter: 'Przy drukarce',
 	steps: ['Naciśnij Skrzynka.', 'Wybierz System → Wydruk bezpieczny.', 'Wpisz ID i PIN, potem Start.'],
 	printAnother: 'Drukuj kolejny',
+	tonerLabel: 'Toner',
+	tonerLowHint: (colors: string[]) => `Kończy się toner (${colors.join(', ')}). Wydruki mogą być bledsze.`,
 	toner: { black: 'Czarny', cyan: 'Cyjan', magenta: 'Magenta', yellow: 'Żółty' } satisfies Record<Toner['key'], string>,
 	errors: {
 		rangeInvalid: 'Nie rozumiem zakresu. Wpisz np. 1–3, 5.',

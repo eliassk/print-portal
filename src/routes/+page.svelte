@@ -39,6 +39,10 @@
 	let bookBusy = $state(false);
 	let revision = $state(0);
 	let morePapers = $state(false);
+	const TONER_LOW = 15;
+	const TONER_ORDER = ['black', 'cyan', 'magenta', 'yellow'];
+	const toners = $derived([...(printer?.toner ?? [])].sort((a, b) => TONER_ORDER.indexOf(a.key) - TONER_ORDER.indexOf(b.key)));
+	const lowToner = $derived(toners.filter((t) => t.level <= TONER_LOW));
 	// A chosen rare paper MUST stay visible, or the choice is hidden from the person.
 	const allPapers = $derived(morePapers || !(COMMON_PAPERS as readonly string[]).includes(opts.paper));
 	const shownPapers = $derived(allPapers ? PAPERS : COMMON_PAPERS);
@@ -317,6 +321,19 @@
 				<section class="card">
 					<h2 class="lbl">{pl.printerLabel}</h2>
 					<TrayList trays={printer.trays} />
+					{#if printer.toner.length}
+						<h3 class="lbl sub">{pl.tonerLabel}</h3>
+						<div class="toners">
+							{#each toners as t (t.key)}
+								<div class="toner" class:low={t.level <= TONER_LOW}>
+									<span class="tname"><span class="dot {t.key}" aria-hidden="true"></span>{pl.toner[t.key]}</span>
+									<span class="tbar" aria-hidden="true"><span class={t.key} style="width: {t.level}%"></span></span>
+									<b>{t.level}%</b>
+								</div>
+							{/each}
+						</div>
+						{#if lowToner.length}<p class="hint">{pl.tonerLowHint(lowToner.map((t) => pl.toner[t.key].toLowerCase()))}</p>{/if}
+					{/if}
 				</section>
 			{/if}
 		{:else if screen === 'file'}
@@ -1114,6 +1131,67 @@
 	}
 	.bsheet .input:disabled {
 		opacity: 0.45;
+	}
+	.lbl.sub {
+		margin: 18px 0 10px;
+	}
+	.toners {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px 28px;
+	}
+	@media (max-width: 560px) {
+		.toners {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.toner {
+		display: grid;
+		grid-template-columns: 92px minmax(0, 1fr) 42px;
+		align-items: center;
+		gap: 10px;
+		font-size: 14px;
+	}
+	.toner b {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+	.toner.low b {
+		color: var(--bad);
+	}
+	.tname {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--muted);
+	}
+	.dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+	}
+	.tbar {
+		height: 8px;
+		border-radius: 4px;
+		background: var(--line);
+		overflow: hidden;
+	}
+	.tbar span {
+		display: block;
+		height: 100%;
+		border-radius: 4px;
+	}
+	.black {
+		background: #8a93a3;
+	}
+	.cyan {
+		background: #10a5d8;
+	}
+	.magenta {
+		background: #d6338a;
+	}
+	.yellow {
+		background: #e8c21a;
 	}
 	.more {
 		display: inline-flex;
