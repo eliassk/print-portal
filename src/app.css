@@ -218,3 +218,28 @@ small {
 	font-size: 14px;
 	margin: 0;
 }
+
+/* Page layout shared by several print screens. */
+.hero h1 {
+	font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.3rem);
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+	margin: 4px 0 6px;
+	text-wrap: balance;
+}
+.hero p {
+	margin: 0;
+	color: var(--muted);
+	max-width: 52ch;
+}
+.split {
+	display: grid;
+	gap: 16px;
+}
+@media (min-width: 1000px) {
+	.split {
+		grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+		gap: 24px;
+		align-items: start;
+	}
+}
