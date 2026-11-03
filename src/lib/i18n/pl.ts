@@ -153,7 +153,7 @@ export const pl = {
 		opening: 'Otwieram Telegram…',
 		safety: [
 			'Plik przechodzi przez serwery Telegrama, a u nas czeka 60 minut, potem jest usuwany.',
-			'Każdy, kto ma link od bota, może otworzyć ten plik.',
+			'Po przesłaniu pliku bot odsyła link do druku. Każdy, kto dostanie ten link, może otworzyć plik, więc nie przekazuj go dalej.',
 			'Poufne dokumenty drukuj bezpośrednio z portalu.'
 		]
 	},
