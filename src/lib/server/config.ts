@@ -21,5 +21,7 @@ export const config = {
 	/** Address printed in the QR code on the card next to the printer. */
 	portalUrl: env.PORTAL_URL ?? 'https://drukarka.konfero.pl',
 	/** Telegram bot that turns sent files into portal links. Off when empty. */
-	telegramToken: env.TELEGRAM_BOT_TOKEN ?? ''
+	telegramToken: env.TELEGRAM_BOT_TOKEN ?? '',
+	/** Times in bot messages. The container itself often runs in UTC. */
+	timeZone: env.PORTAL_TZ ?? 'Europe/Warsaw'
 };

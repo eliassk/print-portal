@@ -20,6 +20,8 @@ interface Draft {
 	name: string;
 	/** Set while a draft from the Telegram bot waits for a browser to open its link. */
 	claim?: string;
+	/** Telegram chat that sent the file. It gets the ID and PIN once the job is printed. */
+	chat?: number;
 	/** Set for spreadsheets. files[0] is the PDF of the current pick. */
 	sheets?: { file: string; book: Book; pick: SheetPick };
 	/** Last composed result, so print sends exactly what the preview showed. */
@@ -62,10 +64,12 @@ export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, d
  * A draft no browser owns yet. The returned token MUST reach only the sender.
  * The first browser that opens it becomes the owner.
  */
-export async function saveClaimable(kind: Kind, data: Uint8Array[], items: number, workbook: Workbook | undefined, name: string): Promise<string> {
+export async function saveClaimable(kind: Kind, data: Uint8Array[], items: number, workbook: Workbook | undefined, name: string, chat?: number): Promise<string> {
 	const key = await saveDraft(kind, data, items, '', workbook, name, BOT_DRAFT_TTL_MIN * 60 * 1000);
 	const claim = randomBytes(18).toString('base64url');
-	drafts.get(key)!.claim = claim;
+	const d = drafts.get(key)!;
+	d.claim = claim;
+	d.chat = chat;
 	return claim;
 }
 

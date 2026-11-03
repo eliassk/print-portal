@@ -115,8 +115,18 @@ async function handle(token: string, m: Message) {
 	if (!result.ok) return reply(token, chat, pl.errors[result.error]);
 	const max = getDb().settings().maxPages;
 	if (result.items > max) return reply(token, chat, pl.errors.tooManyPages(max));
-	const claim = await saveClaimable(result.kind, result.data, result.items, result.workbook, file.file_name);
+	const claim = await saveClaimable(result.kind, result.data, result.items, result.workbook, file.file_name, chat);
 	return reply(token, chat, pl.bot.ready(file.file_name, `${config.portalUrl.replace(/\/$/, '')}/?d=${claim}`, BOT_DRAFT_TTL_MIN));
+}
+
+/**
+ * Sends the release codes to the chat that sent the file, so the person can forward
+ * them to whoever picks the print up. The PIN is not kept anywhere else.
+ */
+export async function notifyPrinted(chat: number, job: { id: string; pin: string; expires: number; name: string; sheets: number }) {
+	if (!config.telegramToken) return;
+	const until = new Date(job.expires).toLocaleTimeString('pl-PL', { timeZone: config.timeZone, hour: '2-digit', minute: '2-digit' });
+	await reply(config.telegramToken, chat, pl.bot.printed({ ...job, until }));
 }
 
 let running = false;

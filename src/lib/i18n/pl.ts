@@ -144,13 +144,16 @@ export const pl = {
 		ready: (name: string, url: string, minutes: number) =>
 			`Gotowe: ${name}\n\nPołącz się z Wi-Fi budynku i otwórz link, żeby wybrać ustawienia i wydrukować:\n${url}\n\nLink jest jednorazowy. Każdy, kto go ma, może otworzyć plik, więc nie przekazuj go dalej. Plik jest na serwerze ${minutes} minut, potem zostanie usunięty.`,
 		tooBig: 'Ten plik jest za duży dla bota (limit Telegrama to 20 MB). Otwórz portal w Wi-Fi budynku i wybierz plik tam.',
-		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.'
+		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.',
+		printed: (j: { id: string; pin: string; until: string; name: string; sheets: number }) =>
+			`Wysłano do drukarki: ${j.name}\n\nID zadania: ${j.id}\nPIN: ${j.pin}\n\nOdbierz przy drukarce do ${j.until}: Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN. Po tym czasie drukarka sama usunie wydruk.\n\nMożesz przekazać tę wiadomość osobie, która odbierze wydruk.`
 	},
 	telegram: {
 		title: 'Plik z Telegrama',
 		body: 'Połącz czat z drukarką, a potem przesyłaj pliki do bota. Odpowie linkiem do drukowania.',
 		connect: 'Połącz z Telegramem',
 		opening: 'Otwieram Telegram…',
+		pinSent: 'ID i PIN wysłaliśmy też na Telegram. Możesz przekazać tę wiadomość osobie, która odbierze wydruk.',
 		safety: [
 			'Plik przechodzi przez serwery Telegrama, a u nas czeka 60 minut, potem jest usuwany.',
 			'Po przesłaniu pliku bot odsyła link do druku. Każdy, kto dostanie ten link, może otworzyć plik, więc nie przekazuj go dalej.',

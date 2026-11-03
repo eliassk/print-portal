@@ -6,6 +6,7 @@ import { checkJob } from '$lib/server/limits';
 import { buildSecureJob } from '$lib/server/pjl';
 import { sendRaw } from '$lib/server/printer';
 import { newId, newPin } from '$lib/server/secret';
+import { notifyPrinted } from '$lib/server/telegram';
 import { normalize, PrintOptions, sheetCount } from '$lib/options';
 import { pl } from '$lib/i18n/pl';
 import type { RequestHandler } from './$types';
@@ -49,6 +50,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	db.addJob({ at: now, jobId: id, device: locals.device, sheets, size: o.size, paper: o.paper, color: o.color, expires });
 	db.prune(now - 90 * 24 * 60 * 60 * 1000);
 	await dropDraft(params.id);
-	// The PIN goes to the browser once and is never stored or logged.
-	return json({ id, pin, expires, sheets });
+	// The PIN goes to the browser once and, for files from the bot, to the sender's Telegram chat. It is never stored or logged.
+	if (draft.chat) void notifyPrinted(draft.chat, { id, pin, expires, name: draft.name, sheets });
+	return json({ id, pin, expires, sheets, telegram: !!draft.chat });
 };

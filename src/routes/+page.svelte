@@ -25,7 +25,7 @@
 	let sheet = $state(1);
 	let landscape = $state(false);
 	let previewBusy = $state(false);
-	let result = $state<{ id: string; pin: string; expires: number; sheets: number } | null>(null);
+	let result = $state<{ id: string; pin: string; expires: number; sheets: number; telegram?: boolean } | null>(null);
 	let now = $state(Date.now());
 	let dragging = $state(false);
 	type Pick = { sheets: { name: string; range: string }[]; fit: boolean };
@@ -587,6 +587,7 @@
 					</div>
 					{#if left > 0}<span class="timer">{pl.validFor(mmss)}</span>{:else}<span class="err">{pl.expired}</span>{/if}
 				</section>
+				{#if result.telegram}<p class="note info"><Icon name="send" size={18} />{pl.telegram.pinSent}</p>{/if}
 				<section class="card">
 					<span class="lbl">{pl.atPrinter}</span>
 					<ol class="how">{#each pl.steps as s (s)}<li>{s}</li>{/each}</ol>

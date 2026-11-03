@@ -121,5 +121,6 @@ How it works:
 - The server long-polls `api.telegram.org`. It only makes outbound HTTPS calls, so nothing new is exposed and the portal stays LAN-only.
 - A file from the bot stays on the server for 60 minutes and is then deleted. The bot says so in every reply.
 - Each print link works once. The first browser that opens it owns the file. The PIN step is unchanged.
+- When a file from the bot is printed, the bot also sends its job ID and PIN to the chat that sent it, so the person can forward them to whoever picks the print up. The PIN is still not stored. Set `PORTAL_TZ` if the pickup time should not be shown in `Europe/Warsaw`.
 - Telegram lets bots download files up to 20 MB. Bigger files go through the portal directly.
 - Each chat may send 10 files per 10 minutes.
