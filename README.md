@@ -59,6 +59,8 @@ cp .env.example .env   # set LAN_IP to the VM's LAN address; PORTAL_PORT if 80 i
 docker compose up -d --build
 ```
 
+To update later, run `./scripts/update.sh`. It pulls `main` and rebuilds, with Caddy when it is set up.
+
 ## How a job is built
 
 `src/lib/server/pjl.ts` writes a PJL header (`HOLD=ON`, `HOLDTYPE=PRIVATE`, `KMJOBID`, `HOLDKEY`, `KMCOETYPE=0`) and appends the PDF. It is sent raw to port 9100.
