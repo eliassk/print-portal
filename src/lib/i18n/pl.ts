@@ -8,6 +8,7 @@ const plural = (n: number, one: string, few: string, many: string) =>
 export const pl = {
 	appName: 'Portal druku',
 	back: 'Wstecz',
+	stepsLabel: 'Kroki',
 	stepNames: ['Rodzaj', 'Plik', 'Ustawienia', 'Podsumowanie', 'Odbiór'],
 	tagline: 'Wyślij plik z telefonu lub komputera i odbierz wydruk przy drukarce.',
 	dropHint: 'albo przeciągnij tutaj',
@@ -147,6 +148,9 @@ export const pl = {
 	tonerLabel: 'Toner',
 	toner: { black: 'Czarny', cyan: 'Cyjan', magenta: 'Magenta', yellow: 'Żółty' } satisfies Record<Toner['key'], string>,
 	bot: {
+		/** Names for files Telegram sends without one. */
+		unnamedFile: 'plik',
+		unnamedPhoto: 'zdjecie.jpg',
 		hello: 'Wyślij mi plik (PDF, Word, Excel, PowerPoint) albo zdjęcie, a odpowiem linkiem do drukowania.',
 		connected: (days: number, minutes: number) =>
 			`Połączono. Możesz wysyłać mi pliki (PDF, Word, Excel, PowerPoint) albo zdjęcia, a odpowiem linkiem do drukowania. Połączenie wygaśnie po ${days} dniach bez wydruku, każdy wydruk liczy czas od nowa.\n\nPrzesłany plik czeka na serwerze ${minutes} minut, potem jest usuwany. Pliki przechodzą przez serwery Telegrama, więc poufne dokumenty drukuj bezpośrednio z portalu.\n\nŻeby odłączyć ten czat, wyślij /stop.`,

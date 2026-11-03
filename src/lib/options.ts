@@ -15,8 +15,6 @@ export const PAPER_GSM: Partial<Record<Paper, [number, number]>> = {
 	thick4: [257, 300]
 };
 
-/** Paper from Thick 2 up goes through the bypass tray only. */
-export const bypassOnly = (p: Paper) => p === 'thick2' || p === 'thick3' || p === 'thick4';
 /** Thick paper is loaded by hand in the bypass tray; the cassettes hold plain paper. */
 export const usesBypass = (p: Paper) => p !== 'plain';
 
@@ -50,8 +48,6 @@ export const PRESETS = {
 	photo: { copies: 1, range: '', size: 'A4', color: 'color', duplex: 'off', nup: 1, fit: 'fit', orientation: 'auto', margin: 5, paper: 'thick1p' }
 } as const satisfies Record<Kind, PrintOptions>;
 export const MARGINS = [5, 10, 15, 20] as const;
-
-export type PresetKey = keyof typeof PRESETS;
 
 export const NUP_CHOICES: Record<Kind, readonly PrintOptions['nup'][]> = { doc: [1, 2, 4], photo: [1, 2, 4, 9] };
 

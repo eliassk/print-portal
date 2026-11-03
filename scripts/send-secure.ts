@@ -1,4 +1,4 @@
-// Stage 0: sends one PDF as a Secure Print job, to prove release at the panel.
+// Sends one PDF as a Secure Print job, to check release at the panel before deploying.
 // Usage: pnpm send-secure <file.pdf> [--id 203] [--pin 2030] [--mono] [--duplex long|short] [--a3] [--copies 2] [--paper thick2] [--host 192.168.1.50] [--dry]
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';

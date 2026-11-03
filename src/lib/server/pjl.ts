@@ -1,8 +1,8 @@
 import { usesBypass, type Paper, type PrintOptions } from '../options.ts';
 
 // Captured from the Windows driver: plain paper is MEDIATYPE=PAPER, MEDIAWEIGHT=NORMAL, MEDIASOURCE=AUTO.
-// The thick weights and the bypass name are NOT captured yet. Stage 0 MUST confirm them with
-// one driver capture per paper type; only this table changes. Every value but plain is unverified.
+// The thick weights and the bypass name are NOT captured yet. A driver capture per paper type
+// (print to file) MUST confirm them; only this table changes. Every value but plain is unverified.
 const MEDIA: Record<Paper, { type: string; weight: string; color?: string; preprinted?: boolean }> = {
 	plain: { type: 'PAPER', weight: 'NORMAL' },
 	thick1: { type: 'PAPER', weight: 'THICK1' },

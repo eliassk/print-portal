@@ -66,9 +66,9 @@ export function allowFile(chat: number, now: number): boolean {
 
 /** The file to print: a document as sent, or the largest size of a photo. */
 export function pickFile(m: Message): (TgFile & { file_name: string }) | null {
-	if (m.document) return { ...m.document, file_name: m.document.file_name ?? 'plik' };
+	if (m.document) return { ...m.document, file_name: m.document.file_name ?? ui.bot.unnamedFile };
 	const photo = m.photo?.at(-1);
-	return photo ? { ...photo, file_name: 'zdjecie.jpg' } : null;
+	return photo ? { ...photo, file_name: ui.bot.unnamedPhoto } : null;
 }
 
 async function call<T>(token: string, method: string, body: object, signal?: AbortSignal): Promise<T> {

@@ -73,7 +73,8 @@ export async function printerStatus(host: string, port = 631): Promise<PrinterSt
 		if (!res.ok || status >= 0x0400) throw new Error(`IPP status ${status}`);
 		cache = toStatus(attrs);
 	} catch (e) {
-		console.error('Printer status failed', e);
+		// Logged once per outage, not on every 30 s poll.
+		if (cache?.online !== false) console.error('Printer status failed', e);
 		cache = { online: false, trays: [], toner: [], lowPaper: false, checkedAt: Date.now() };
 	}
 	return cache;

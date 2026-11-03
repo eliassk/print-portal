@@ -6,6 +6,7 @@ const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 export const en: typeof pl = {
 	appName: 'Print Portal',
 	back: 'Back',
+	stepsLabel: 'Steps',
 	stepNames: ['Type', 'File', 'Settings', 'Summary', 'Pick up'],
 	tagline: 'Send a file from your phone or computer and pick up the print at the printer.',
 	dropHint: 'or drop it here',
@@ -145,6 +146,8 @@ export const en: typeof pl = {
 	tonerLabel: 'Toner',
 	toner: { black: 'Black', cyan: 'Cyan', magenta: 'Magenta', yellow: 'Yellow' },
 	bot: {
+		unnamedFile: 'file',
+		unnamedPhoto: 'photo.jpg',
 		hello: 'Send me a file (PDF, Word, Excel, PowerPoint) or a photo and I will reply with a print link.',
 		connected: (days: number, minutes: number) =>
 			`Connected. You can send me files (PDF, Word, Excel, PowerPoint) or photos and I will reply with a print link. The connection expires after ${days} days without a print; every print restarts the count.\n\nA file you send waits on the server for ${minutes} minutes, then it is deleted. Files pass through Telegram's servers, so print confidential documents straight from the portal.\n\nTo disconnect this chat, send /stop.`,

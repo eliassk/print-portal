@@ -261,13 +261,14 @@
 		try {
 			const res = await fetch(`/api/print/${draft}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(effective) });
 			const data = await res.json().catch(() => ({}));
+			// 404 means the draft expired; it MUST NOT be sent again.
+			if (res.status === 404) draft = null;
 			if (!res.ok) throw new Error(data.error ?? ui.errors.generic);
 			result = data;
 			draft = null;
 			screen = 'pin';
 		} catch (err) {
 			error = err instanceof Error ? err.message : ui.errors.generic;
-			if (error === ui.errors.expiredDraft) draft = null;
 		} finally {
 			busy = false;
 		}
@@ -344,7 +345,7 @@
 			{:else}
 				<span class="brand"><span class="logo"><Icon name="printer" size={18} /></span>{ui.appName}</span>
 			{/if}
-			<ol class="steps" aria-label="Kroki">
+			<ol class="steps" aria-label={ui.stepsLabel}>
 				{#each order as s, i (s)}
 					<li class:done={i < order.indexOf(screen)} class:now={s === screen}><span>{i + 1}</span>{ui.stepNames[i]}</li>
 				{/each}
