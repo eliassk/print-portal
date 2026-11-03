@@ -42,7 +42,6 @@
 	const TONER_LOW = 15;
 	const TONER_ORDER = ['black', 'cyan', 'magenta', 'yellow'];
 	const toners = $derived([...(printer?.toner ?? [])].sort((a, b) => TONER_ORDER.indexOf(a.key) - TONER_ORDER.indexOf(b.key)));
-	const lowToner = $derived(toners.filter((t) => t.level <= TONER_LOW));
 	// A chosen rare paper MUST stay visible, or the choice is hidden from the person.
 	const allPapers = $derived(morePapers || !(COMMON_PAPERS as readonly string[]).includes(opts.paper));
 	const shownPapers = $derived(allPapers ? PAPERS : COMMON_PAPERS);
@@ -332,7 +331,6 @@
 								</div>
 							{/each}
 						</div>
-						{#if lowToner.length}<p class="hint">{pl.tonerLowHint(lowToner.map((t) => pl.toner[t.key].toLowerCase()))}</p>{/if}
 					{/if}
 				</section>
 			{/if}
