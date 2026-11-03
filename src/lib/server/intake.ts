@@ -31,10 +31,9 @@ export async function intake(files: { name: string; data: Uint8Array }[]): Promi
 		if (files.length > 1) return { ok: false, error: 'mixed' };
 		let pdf = first.data;
 		if (!isPdf(pdf)) {
-			const converted = await officeToPdf(pdf, ext(first.name)).catch(() => undefined);
-			if (converted === null) return { ok: false, error: 'officeMissing' };
-			if (!converted) return { ok: false, error: 'broken' };
-			pdf = converted;
+			const converted = await officeToPdf(pdf, ext(first.name));
+			if (!converted.ok) return converted;
+			pdf = converted.data;
 		}
 		const r = await cleanPdf(pdf);
 		return r.ok ? { ok: true, kind: 'doc', data: [r.pdf], items: r.pages } : r;
@@ -70,10 +69,9 @@ async function cleanPdf(pdf: Uint8Array): Promise<DocResult> {
 async function intakeSheet(data: Uint8Array, extension: string): Promise<Intake> {
 	let xlsx = data;
 	if (extension !== 'xlsx') {
-		const converted = await sheetToXlsx(data, extension).catch(() => undefined);
-		if (converted === null) return { ok: false, error: 'officeMissing' };
-		if (!converted) return { ok: false, error: 'broken' };
-		xlsx = converted;
+		const converted = await sheetToXlsx(data, extension);
+		if (!converted.ok) return converted;
+		xlsx = converted.data;
 	}
 	let book: Book;
 	try {
@@ -92,8 +90,6 @@ async function intakeSheet(data: Uint8Array, extension: string): Promise<Intake>
 /** Renders the picked sheets to a clean PDF. Throws RangeError on a bad pick. */
 export async function printBook(xlsx: Uint8Array, pick: SheetPick, orientation: 'portrait' | 'landscape' | null = null): Promise<DocResult> {
 	const prepared = prepareBook(xlsx, pick, orientation);
-	const pdf = await officeToPdf(prepared, 'xlsx').catch(() => undefined);
-	if (pdf === null) return { ok: false, error: 'officeMissing' };
-	if (!pdf) return { ok: false, error: 'broken' };
-	return cleanPdf(pdf);
+	const converted = await officeToPdf(prepared, 'xlsx');
+	return converted.ok ? cleanPdf(converted.data) : converted;
 }

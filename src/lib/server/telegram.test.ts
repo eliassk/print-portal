@@ -20,7 +20,7 @@ describe('telegram bot', () => {
 	});
 
 	it('hands a draft to the first browser only', async () => {
-		const claim = await saveClaimable('photo', [new Uint8Array([1])], 1, undefined, 'x.jpg');
+		const claim = await saveClaimable({ kind: 'photo', data: [new Uint8Array([1])], items: 1 }, 'x.jpg');
 		const first = claimDraft(claim, 'device-a');
 		expect(first?.draft.name).toBe('x.jpg');
 		expect(getDraft(first!.key, 'device-a')).not.toBeNull();

@@ -34,17 +34,30 @@ export function sanitizePdf(pdf: Uint8Array): Promise<Uint8Array> {
 	});
 }
 
-/** Converts Word, Excel, PowerPoint or OpenDocument files to PDF. Returns null when LibreOffice is missing. */
-export function officeToPdf(data: Uint8Array, ext: string): Promise<Uint8Array | null> {
+/** LibreOffice output, or why there is none. */
+export type Converted = { ok: true; data: Uint8Array } | { ok: false; error: 'officeMissing' | 'broken' };
+
+/** Converts Word, Excel, PowerPoint or OpenDocument files to PDF. */
+export function officeToPdf(data: Uint8Array, ext: string): Promise<Converted> {
 	return officeConvert(data, ext, 'pdf');
 }
 
-/** Converts a spreadsheet (.xls, .ods) to .xlsx. Returns null when LibreOffice is missing. */
-export function sheetToXlsx(data: Uint8Array, ext: string): Promise<Uint8Array | null> {
+/** Converts a spreadsheet (.xls, .ods) to .xlsx. */
+export function sheetToXlsx(data: Uint8Array, ext: string): Promise<Converted> {
 	return officeConvert(data, ext, 'xlsx');
 }
 
-function officeConvert(data: Uint8Array, ext: string, to: 'pdf' | 'xlsx'): Promise<Uint8Array | null> {
+async function officeConvert(data: Uint8Array, ext: string, to: 'pdf' | 'xlsx'): Promise<Converted> {
+	try {
+		const out = await convertWith(data, ext, to);
+		return out ? { ok: true, data: out } : { ok: false, error: 'officeMissing' };
+	} catch {
+		return { ok: false, error: 'broken' };
+	}
+}
+
+/** Null when LibreOffice is not installed. Throws when it fails on the file. */
+function convertWith(data: Uint8Array, ext: string, to: 'pdf' | 'xlsx'): Promise<Uint8Array | null> {
 	return inTemp(async (dir) => {
 		const src = join(dir, `in.${ext}`);
 		await writeFile(src, data);

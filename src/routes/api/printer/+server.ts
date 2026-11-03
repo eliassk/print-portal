@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { getDb } from '$lib/server/app';
+import { getDb } from '$lib/server/db';
 import { config } from '$lib/server/config';
 import { printerStatus } from '$lib/server/status';
 import { botReady } from '$lib/server/telegram';

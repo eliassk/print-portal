@@ -1,21 +1,23 @@
 import { json } from '@sveltejs/kit';
 import { config } from '$lib/server/config';
+import { getDb } from '$lib/server/db';
+import { pageLimit, refuse } from '$lib/server/http';
 import { intake } from '$lib/server/intake';
 import { saveDraft } from '$lib/server/jobs';
-import { getDb } from '$lib/server/app';
+import { overPageLimit } from '$lib/server/limits';
 import { ui } from '$lib/i18n';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const form = await request.formData();
 	const files = form.getAll('file').filter((f): f is File => f instanceof File);
-	if (files.length > config.maxPhotos) return json({ error: ui.errors.tooManyPhotos(config.maxPhotos) }, { status: 400 });
-	if (files.reduce((n, f) => n + f.size, 0) > config.maxUploadBytes) return json({ error: ui.errors.tooBig }, { status: 413 });
+	if (files.length > config.maxPhotos) return refuse(400, ui.errors.tooManyPhotos(config.maxPhotos));
+	if (files.reduce((n, f) => n + f.size, 0) > config.maxUploadBytes) return refuse(413, ui.errors.tooBig);
 	const result = await intake(await Promise.all(files.map(async (f) => ({ name: f.name, data: new Uint8Array(await f.arrayBuffer()) }))));
-	if (!result.ok) return json({ error: ui.errors[result.error] }, { status: 400 });
-	const max = getDb().settings().maxPages;
-	if (result.items > max) return json({ error: ui.errors.tooManyPages(max) }, { status: 400 });
-	const draft = await saveDraft(result.kind, result.data, result.items, locals.device, result.workbook);
+	if (!result.ok) return refuse(400, ui.errors[result.error]);
+	const tooMany = pageLimit(overPageLimit(getDb().settings(), result.items));
+	if (tooMany) return tooMany;
+	const draft = await saveDraft(result, { device: locals.device });
 	const sheets = result.workbook && { list: result.workbook.book.sheets, pick: result.workbook.pick };
 	return json({ draft, kind: result.kind, items: result.items, sheets });
 };

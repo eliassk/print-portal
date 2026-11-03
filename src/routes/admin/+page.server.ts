@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { getDb } from '$lib/server/app';
+import { getDb } from '$lib/server/db';
 import { passwordMatches, signAdmin, verifyAdmin } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { startOfDay } from '$lib/server/limits';

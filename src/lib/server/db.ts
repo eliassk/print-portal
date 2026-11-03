@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { config } from './config.ts';
 
 export interface Settings {
 	colorAllowed: boolean;
@@ -103,3 +104,11 @@ export function openDb(dir: string | ':memory:') {
 	};
 }
 export type Db = ReturnType<typeof openDb>;
+
+let db: Db | null = null;
+
+/** The one database for the running server, opened on first use. */
+export function getDb(): Db {
+	db ??= openDb(config.dataDir);
+	return db;
+}

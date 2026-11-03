@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import { dateLocale, ui } from '$lib/i18n';
-import { getDb } from './app.ts';
+import { getDb } from './db.ts';
 import { config } from './config.ts';
 import { intake } from './intake.ts';
 import { BOT_DRAFT_TTL_MIN, saveClaimable } from './jobs.ts';
+import { overPageLimit } from './limits.ts';
 
 // Overridable only for local tests against a fake Telegram server.
 const API = env.TELEGRAM_API ?? 'https://api.telegram.org';
@@ -113,9 +114,9 @@ async function handle(token: string, m: Message) {
 
 	const result = await intake([{ name: file.file_name, data }]);
 	if (!result.ok) return reply(token, chat, ui.errors[result.error]);
-	const max = getDb().settings().maxPages;
-	if (result.items > max) return reply(token, chat, ui.errors.tooManyPages(max));
-	const claim = await saveClaimable(result.kind, result.data, result.items, result.workbook, file.file_name, chat);
+	const max = overPageLimit(getDb().settings(), result.items);
+	if (max !== null) return reply(token, chat, ui.errors.tooManyPages(max));
+	const claim = await saveClaimable(result, file.file_name, chat);
 	return reply(token, chat, ui.bot.ready(file.file_name, `${config.portalUrl.replace(/\/$/, '')}/?d=${claim}`, BOT_DRAFT_TTL_MIN));
 }
 

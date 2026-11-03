@@ -8,29 +8,29 @@ const job = (db: ReturnType<typeof openDb>, at: number, sheets: number, device =
 	db.addJob({ at, jobId: String(1000 + at % 9000), device, sheets, size: 'A4', paper: 'plain', color: 'mono', expires: at + 3600_000 });
 
 describe('checkJob', () => {
-	it('lets a first job through', () => expect(checkJob(openDb(':memory:'), s, 'a', 3, 3, 'mono', now)).toBeNull());
+	it('lets a first job through', () => expect(checkJob(openDb(':memory:'), s, { device: 'a', sheets: 3, items: 3, color: 'mono' }, now)).toBeNull());
 
 	it('stops at the daily sheet limit and says how many are left', () => {
 		const db = openDb(':memory:');
 		job(db, startOfDay(now) + 1000, 8);
-		expect(checkJob(db, s, 'a', 3, 3, 'mono', now)).toEqual({ reason: 'daily', left: 2 });
+		expect(checkJob(db, s, { device: 'a', sheets: 3, items: 3, color: 'mono' }, now)).toEqual({ reason: 'daily', left: 2 });
 	});
 
 	it('does not count yesterday or other devices', () => {
 		const db = openDb(':memory:');
 		job(db, startOfDay(now) - 1000, 9);
 		job(db, now - 1000, 9, 'b');
-		expect(checkJob(db, s, 'a', 3, 3, 'mono', now)).toBeNull();
+		expect(checkJob(db, s, { device: 'a', sheets: 3, items: 3, color: 'mono' }, now)).toBeNull();
 	});
 
 	it('limits five jobs per ten minutes', () => {
 		const db = openDb(':memory:');
 		for (let i = 0; i < 5; i++) job(db, now - 60_000 * (i + 1), 0);
-		expect(checkJob(db, s, 'a', 1, 1, 'mono', now)).toEqual({ reason: 'rate' });
+		expect(checkJob(db, s, { device: 'a', sheets: 1, items: 1, color: 'mono' }, now)).toEqual({ reason: 'rate' });
 	});
 
 	it('refuses colour when switched off', () =>
-		expect(checkJob(openDb(':memory:'), { ...s, colorAllowed: false }, 'a', 1, 1, 'color', now)).toEqual({ reason: 'color' }));
+		expect(checkJob(openDb(':memory:'), { ...s, colorAllowed: false }, { device: 'a', sheets: 1, items: 1, color: 'color' }, now)).toEqual({ reason: 'color' }));
 });
 
 describe('settings', () => {

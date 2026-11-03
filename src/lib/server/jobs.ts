@@ -5,9 +5,12 @@ import { config } from './config.ts';
 import { compose, type Composed, type Source } from './compose.ts';
 import type { Kind, PrintOptions } from '../options.ts';
 import type { Workbook } from './intake.ts';
+
+/** What intake produced: the files to keep and what they hold. */
+type Intake = { kind: Kind; data: Uint8Array[]; items: number; workbook?: Workbook };
 import type { Book, SheetPick } from './workbook.ts';
 
-interface Draft {
+export interface Draft {
 	kind: Kind;
 	files: string[];
 	/** Pages for a document, photos for photos. */
@@ -39,7 +42,10 @@ setInterval(() => void sweep(), 60_000).unref();
 
 const dir = () => join(config.dataDir, 'uploads');
 
-export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, device: string, workbook?: Workbook, name = '', ttlMs = DRAFT_TTL_MS): Promise<string> {
+export async function saveDraft(
+	{ kind, data, items, workbook }: Intake,
+	{ device, name = '', ttlMs = DRAFT_TTL_MS }: { device: string; name?: string; ttlMs?: number }
+): Promise<string> {
 	await sweep();
 	await mkdir(dir(), { recursive: true });
 	const key = randomUUID();
@@ -64,8 +70,8 @@ export async function saveDraft(kind: Kind, data: Uint8Array[], items: number, d
  * A draft no browser owns yet. The returned token MUST reach only the sender.
  * The first browser that opens it becomes the owner.
  */
-export async function saveClaimable(kind: Kind, data: Uint8Array[], items: number, workbook: Workbook | undefined, name: string, chat?: number): Promise<string> {
-	const key = await saveDraft(kind, data, items, '', workbook, name, BOT_DRAFT_TTL_MIN * 60 * 1000);
+export async function saveClaimable(file: Intake, name: string, chat?: number): Promise<string> {
+	const key = await saveDraft(file, { device: '', name, ttlMs: BOT_DRAFT_TTL_MIN * 60 * 1000 });
 	const claim = randomBytes(18).toString('base64url');
 	const d = drafts.get(key)!;
 	d.claim = claim;

@@ -10,6 +10,9 @@ export interface Tray {
 	state: TrayState;
 }
 
+/** Toner at or below this percentage is shown as low. */
+export const TONER_LOW = 15;
+
 export interface Toner {
 	key: 'black' | 'cyan' | 'magenta' | 'yellow';
 	level: number;
