@@ -75,12 +75,56 @@ Done when a phone photo prints on thick paper from the bypass tray exactly as pr
 - [x] Admin view of recent jobs and today's totals.
 - [ ] "Printed" tick. The printer does not report held Secure Print jobs over IPP, and Job History needs a Web Connection session. Admin shows "Czeka na PIN" until the PIN expires instead.
 
+### Stage 5: Billing tenants
+
+Goal: bill each tenant who rents the building for what they printed, by paper type, size, colour and period.
+
+Who a job belongs to comes from a billing code. One code per rental, valid only inside the rental period.
+
+**5a. Tenants and codes (admin)**
+- [ ] Table `tenants`: name, code, valid from, valid to, note, archived.
+- [ ] Codes are short, easy to read aloud, and avoid look-alikes (no 0/O, 1/I), e.g. `KX7-42`.
+- [ ] Admin: add, edit, end early, archive. A code outside its period MUST be refused.
+- [ ] Each tenant gets a link and QR: `drukarka.konfero.pl/?kod=KX742`, printable as an A5 card like `/karta`.
+
+**5b. Code on the portal**
+- [ ] Opening the link stores the code in a cookie on that device, for the rental period.
+- [ ] Codes can also be typed in on the summary screen.
+- [ ] The summary shows "Rozliczane na: Firma X" with "Zmień".
+- [ ] Setting "kod wymagany": on, printing without a valid code is refused. Off, such jobs go to "bez kodu".
+- [ ] The server checks the code again at send time. The cookie alone MUST NOT be trusted.
+- [ ] Telegram jobs need nothing extra: the final send always happens in the portal.
+
+**5c. What each job records**
+- [ ] Add to `jobs`: `tenant_id`, `sides` (printed faces × copies), `duplex`.
+- [ ] Already recorded: time, sheets, size, paper, colour.
+- [ ] Billing rows MUST be kept long enough to invoice. Today jobs older than 90 days are pruned; keep tenant jobs for 2 years, or until the tenant is archived and exported.
+
+**5d. Price list (optional)**
+- [ ] Prices per side, by size × colour, plus a surcharge per paper type (thick, labels, transparency).
+- [ ] Each job stores the price it was sent at, so changing the price list never rewrites past bills.
+
+**5e. Report and export**
+- [ ] Admin report per tenant and period: jobs, sheets, sides, split by size, paper and colour, with totals when prices exist.
+- [ ] CSV export, one row per job and a summary sheet, for invoicing.
+- [ ] Period picker: rental period, a month, or custom dates.
+
+**5f. Released or only sent (later, needs a test at the printer)**
+- [ ] Bills count jobs sent to the printer. A job nobody releases expires after 60 minutes but is still counted.
+- [ ] The printer does not report held Secure Print jobs over IPP. Job History in Web Connection may show the release. If a test confirms it, mark released jobs and bill only those.
+
+Order: 5a → 5b → 5c give a working count per tenant. 5e makes it usable for invoices. 5d and 5f can follow.
+
 ## Open decisions
 
 1. May guests on the guest Wi-Fi print?
 2. Anonymous with a daily cap, or a light login?
 3. Page limits per job and per day; colour for everyone?
 4. Portal address on local DNS, e.g. `drukarka.konfero.pl`.
+5. Billing code required for everyone, or optional with a "bez kodu" bucket?
+6. Prices in the portal, or counts only and pricing done in the invoice?
+7. Bill per sheet of paper or per printed side?
+8. Bill jobs sent, or wait for 5f and bill only released jobs?
 
 ## Later (not scheduled)
 
