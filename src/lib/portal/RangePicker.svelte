@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { api } from '$lib/api';
 	import { ui } from '$lib/i18n';
 
 	type Grid = { cols: number; rows: number; cells: string[][]; clipped: boolean };
@@ -46,9 +47,7 @@
 		const b = parse(range);
 		if (b) [anchor, end] = [[b.c1, b.r1], [b.c2, b.r2]];
 		try {
-			const res = await fetch(`/api/sheets/${draft}?name=${encodeURIComponent(name)}`);
-			if (!res.ok) throw new Error();
-			grid = await res.json();
+			grid = await api<Grid>(`/api/sheets/${draft}?name=${encodeURIComponent(name)}`, { method: 'GET' });
 		} catch {
 			failed = true;
 		}

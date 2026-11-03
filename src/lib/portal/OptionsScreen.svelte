@@ -2,7 +2,7 @@
 	import Icon from '$lib/Icon.svelte';
 	import { ui } from '$lib/i18n';
 	import { COMMON_PAPERS, MARGINS, NUP_CHOICES, PAPER_GSM, PAPERS, usesBypass } from '$lib/options';
-	import RangePicker from '$lib/RangePicker.svelte';
+	import RangePicker from './RangePicker.svelte';
 	import PrintPreview from './PrintPreview.svelte';
 	import TrayNote from './TrayNote.svelte';
 	import type { Portal } from './portal.svelte';
