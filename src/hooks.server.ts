@@ -1,5 +1,8 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, ServerInit } from '@sveltejs/kit';
 import { newDeviceId } from '$lib/server/auth';
+import { startBot } from '$lib/server/telegram';
+
+export const init: ServerInit = () => startBot();
 
 /** Gives each browser a random device id, so daily limits count per phone. */
 export const handle: Handle = async ({ event, resolve }) => {

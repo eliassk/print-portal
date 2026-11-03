@@ -19,5 +19,7 @@ export const config = {
 	/** Signs admin cookies. MUST be long and random in production. */
 	adminSecret: env.ADMIN_SECRET ?? '',
 	/** Address printed in the QR code on the card next to the printer. */
-	portalUrl: env.PORTAL_URL ?? 'https://drukarka.konfero.pl'
+	portalUrl: env.PORTAL_URL ?? 'https://drukarka.konfero.pl',
+	/** Telegram bot that turns sent files into portal links. Off when empty. */
+	telegramToken: env.TELEGRAM_BOT_TOKEN ?? ''
 };

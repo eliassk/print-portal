@@ -102,6 +102,8 @@
 		}
 	}
 	onMount(() => {
+		const claim = new URLSearchParams(location.search).get('d');
+		if (claim) openClaim(claim);
 		loadPrinter();
 		const t = setInterval(loadPrinter, 60_000);
 		return () => clearInterval(t);
@@ -169,6 +171,29 @@
 			draft = data.draft;
 			items = data.items;
 			if (data.kind !== kind) choose(data.kind);
+			setBook(data.sheets ?? null);
+			preview = null;
+			sheet = 1;
+			screen = 'opts';
+		} catch (err) {
+			error = err instanceof Error ? err.message : pl.errors.generic;
+		} finally {
+			busy = false;
+		}
+	}
+
+	/** A file sent to the Telegram bot: its link carries a one-time token. */
+	async function openClaim(claim: string) {
+		history.replaceState(null, '', location.pathname);
+		busy = true;
+		try {
+			const res = await fetch(`/api/claim/${encodeURIComponent(claim)}`, { method: 'POST' });
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.error ?? pl.errors.generic);
+			choose(data.kind);
+			draft = data.draft;
+			items = data.items;
+			fileName = data.name;
 			setBook(data.sheets ?? null);
 			preview = null;
 			sheet = 1;

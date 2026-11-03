@@ -101,3 +101,19 @@ docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
 ```
 
 Check the certificate: `docker compose -f docker-compose.yml -f docker-compose.https.yml logs caddy | grep -i certificate`.
+
+## Telegram bot
+
+People forward a file to the bot and get a one-time link back. The link opens the portal with the file already loaded, so nothing has to be saved on the phone first.
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and copy its token.
+2. Put it in `.env` as `TELEGRAM_BOT_TOKEN=…` and restart the stack.
+3. The log shows `Telegram bot started`.
+
+How it works:
+
+- The server long-polls `api.telegram.org`. It only makes outbound HTTPS calls, so nothing new is exposed and the portal stays LAN-only.
+- The link works only on the building network, so the "be in the building" check still holds. The PIN step is unchanged.
+- Each link works once and expires with the draft after 30 minutes. The first browser that opens it owns the file.
+- Telegram lets bots download files up to 20 MB. Bigger files go through the portal directly.
+- Each chat may send 10 files per 10 minutes.

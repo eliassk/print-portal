@@ -134,6 +134,14 @@ export const pl = {
 	printAnother: 'Drukuj kolejny',
 	tonerLabel: 'Toner',
 	toner: { black: 'Czarny', cyan: 'Cyjan', magenta: 'Magenta', yellow: 'Żółty' } satisfies Record<Toner['key'], string>,
+	bot: {
+		hello: (url: string) =>
+			`Wyślij mi plik (PDF, Word, Excel, PowerPoint) albo zdjęcie, a odpowiem linkiem do drukowania.\n\nLink otworzysz tylko w Wi-Fi budynku. Możesz też wejść od razu na ${url}`,
+		ready: (name: string, url: string) =>
+			`Gotowe: ${name}\n\nPołącz się z Wi-Fi budynku i otwórz link, żeby wybrać ustawienia i wydrukować:\n${url}\n\nLink jest jednorazowy i działa 30 minut.`,
+		tooBig: 'Ten plik jest za duży dla bota (limit Telegrama to 20 MB). Otwórz portal w Wi-Fi budynku i wybierz plik tam.',
+		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.'
+	},
 	errors: {
 		rangeInvalid: 'Nie rozumiem zakresu. Wpisz np. 1–3, 5.',
 		cellRange: 'Nie rozumiem zakresu komórek. Wpisz np. A1:F30.',
@@ -147,6 +155,7 @@ export const pl = {
 		officeMissing: 'Pliki Word i Excel nie są jeszcze obsługiwane na tym serwerze. Zapisz plik jako PDF.',
 		broken: 'Nie mogę otworzyć tego pliku. Zapisz go jeszcze raz i spróbuj ponownie.',
 		expiredDraft: 'Plik wygasł. Wybierz go jeszcze raz.',
+		claimGone: 'Ten link już nie działa. Był jednorazowy i ważny 30 minut. Wyślij plik do bota jeszcze raz.',
 		rate: 'Wysłano kilka wydruków pod rząd. Odczekaj 10 minut.',
 		daily: (left: number) => `Dzisiejszy limit wydruków wyczerpany. Zostało ${left} kartek na dziś.`,
 		colorOff: 'Druk w kolorze jest wyłączony. Wybierz czarno-biały.',
