@@ -61,6 +61,38 @@
 	const timer = setInterval(() => (now = Date.now()), 1000);
 	onDestroy(() => clearInterval(timer));
 
+	// Ctrl+V or Cmd+V anywhere on the file screen.
+	function onPaste(e: ClipboardEvent) {
+		if (screen !== 'file' || busy) return;
+		const files = [...(e.clipboardData?.files ?? [])];
+		if (!files.length) return;
+		e.preventDefault();
+		uploadFiles(files.map(named));
+	}
+
+	/** iOS and Safari show their own "Paste" bubble; the page sees only what the person allows. */
+	async function pasteButton() {
+		error = '';
+		try {
+			const files: File[] = [];
+			for (const item of await navigator.clipboard.read()) {
+				const type = item.types.find((t) => t.startsWith('image/') || t === 'application/pdf');
+				if (type) files.push(named(new File([await item.getType(type)], '', { type })));
+			}
+			if (!files.length) throw new Error();
+			await uploadFiles(files);
+		} catch {
+			error = pl.pasteEmpty;
+		}
+	}
+
+	/** Pasted images often have no name; the server only needs the extension. */
+	function named(f: File): File {
+		if (f.name) return f;
+		const ext = f.type === 'application/pdf' ? 'pdf' : (f.type.split('/')[1] ?? 'png');
+		return new File([f], `${pl.pastedName}.${ext}`, { type: f.type });
+	}
+
 	async function loadPrinter() {
 		try {
 			const res = await fetch('/api/printer');
@@ -211,6 +243,8 @@
 	const order: Screen[] = ['start', 'file', 'opts', 'sum', 'pin'];
 </script>
 
+<svelte:window onpaste={onPaste} />
+
 {#snippet previewBlock()}
 		<div class="prev" class:busy={previewBusy}>
 			{#if preview}
@@ -342,6 +376,7 @@
 					<input type="file" accept="image/jpeg,image/png" multiple onchange={upload} disabled={busy} />
 				{/if}
 			</label>
+			<button class="paste" disabled={busy} onclick={pasteButton}><Icon name="clipboard" size={18} />{pl.paste}</button>
 			{#if kind === 'photo'}
 				<label class="btn sec cam">
 					<Icon name="camera" size={20} />{pl.takePhoto}
@@ -771,6 +806,23 @@
 	}
 	.drop b {
 		font-size: 1.1rem;
+	}
+	.paste {
+		justify-self: center;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 12px;
+		padding: 10px 16px;
+		border: 1px solid var(--line-strong);
+		border-radius: 12px;
+		background: var(--surface);
+		color: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.paste:hover {
+		border-color: var(--accent);
 	}
 	input[type='file'] {
 		position: absolute;
