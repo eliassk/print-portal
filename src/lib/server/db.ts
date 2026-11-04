@@ -8,6 +8,10 @@ export interface Settings {
 	colorAllowed: boolean;
 	dailyPages: number;
 	maxPages: number;
+	/** Telegram chats that may run admin commands in the bot. */
+	adminChats: number[];
+	/** Who each admin chat belongs to, as Telegram last reported it. Keyed by chat ID. */
+	adminNames: Record<string, string>;
 }
 
 export interface JobRow {
@@ -22,12 +26,36 @@ export interface JobRow {
 	customer?: string | null;
 }
 
+export interface UsageRow {
+	customerId: number | null;
+	size: string;
+	color: string;
+	paper: string;
+	jobs: number;
+	sheets: number;
+	sides: number;
+}
+
+export interface BillingJob {
+	at: number;
+	jobId: string;
+	customerId: number | null;
+	customer: string | null;
+	size: string;
+	color: string;
+	paper: string;
+	duplex: string | null;
+	sheets: number;
+	/** Printed sides. Jobs from before sides were recorded count one side per sheet. */
+	sides: number;
+}
+
 type CustomerRow = { id: number; name: string; code: string; enabled: number; active_from: string | null; active_until: string | null; networks: string };
 const toCustomer = (r: CustomerRow): Customer => ({
 	id: r.id, name: r.name, code: r.code, enabled: !!r.enabled, activeFrom: r.active_from, activeUntil: r.active_until, networks: r.networks
 });
 
-const DEFAULTS: Settings = { colorAllowed: true, dailyPages: 50, maxPages: 50 };
+const DEFAULTS: Settings = { colorAllowed: true, dailyPages: 50, maxPages: 50, adminChats: [], adminNames: {} };
 
 /**
  * Jobs, daily counters, settings, customers and authorized Telegram chats. File names and PINs are never stored.
@@ -56,6 +84,9 @@ export function openDb(dir: string | ':memory:') {
 	// Databases from before customers existed get the new columns.
 	const has = (table: string, col: string) => (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some((c) => c.name === col);
 	if (!has('jobs', 'customer_id')) db.exec('ALTER TABLE jobs ADD COLUMN customer_id INTEGER');
+	if (!has('jobs', 'sides')) db.exec('ALTER TABLE jobs ADD COLUMN sides INTEGER');
+	if (!has('jobs', 'duplex')) db.exec('ALTER TABLE jobs ADD COLUMN duplex TEXT');
+	db.exec('CREATE INDEX IF NOT EXISTS jobs_customer_at ON jobs (customer_id, at)');
 	if (!has('telegram_chats', 'customer_id')) db.exec('ALTER TABLE telegram_chats ADD COLUMN customer_id INTEGER');
 
 	return {
@@ -69,9 +100,9 @@ export function openDb(dir: string | ':memory:') {
 			const put = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
 			for (const [k, v] of Object.entries(s)) put.run(k, JSON.stringify(v));
 		},
-		addJob(j: JobRow & { device: string; customerId?: number }) {
-			db.prepare('INSERT INTO jobs (at, job_id, device, sheets, size, paper, color, expires, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-				j.at, j.jobId, j.device, j.sheets, j.size, j.paper, j.color, j.expires, j.customerId ?? null
+		addJob(j: JobRow & { device: string; customerId?: number; sides?: number; duplex?: string }) {
+			db.prepare('INSERT INTO jobs (at, job_id, device, sheets, size, paper, color, expires, customer_id, sides, duplex) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+				j.at, j.jobId, j.device, j.sheets, j.size, j.paper, j.color, j.expires, j.customerId ?? null, j.sides ?? null, j.duplex ?? null
 			);
 		},
 		/** Sheets this device printed since `since`. */
@@ -146,9 +177,27 @@ export function openDb(dir: string | ':memory:') {
 			db.prepare('DELETE FROM telegram_chats WHERE customer_id = ?').run(id);
 			db.prepare('DELETE FROM customers WHERE id = ?').run(id);
 		},
-		/** Drops job rows older than `before`, so the table stays small. */
-		prune(before: number) {
-			db.prepare('DELETE FROM jobs WHERE at < ?').run(before);
+		/** Totals per customer, size, colour and paper for jobs sent in [from, to). */
+		usage(from: number, to: number): UsageRow[] {
+			return (
+				db.prepare(`SELECT customer_id, size, color, paper, COUNT(*) AS jobs, SUM(sheets) AS sheets, SUM(COALESCE(sides, sheets)) AS sides
+					FROM jobs WHERE at >= ? AND at < ? GROUP BY customer_id, size, color, paper ORDER BY customer_id, size, color, paper`).all(from, to) as {
+					customer_id: number | null; size: string; color: string; paper: string; jobs: number; sheets: number; sides: number;
+				}[]
+			).map((r) => ({ customerId: r.customer_id, size: r.size, color: r.color, paper: r.paper, jobs: Number(r.jobs), sheets: Number(r.sheets), sides: Number(r.sides) }));
+		},
+		/** Every job sent in [from, to), oldest first, for the CSV export. */
+		jobsBetween(from: number, to: number): BillingJob[] {
+			return (
+				db.prepare(`SELECT j.at, j.job_id, j.customer_id, c.name AS customer, j.size, j.color, j.paper, j.duplex, j.sheets, COALESCE(j.sides, j.sheets) AS sides
+					FROM jobs j LEFT JOIN customers c ON c.id = j.customer_id WHERE j.at >= ? AND j.at < ? ORDER BY j.at`).all(from, to) as {
+					at: number; job_id: string; customer_id: number | null; customer: string | null; size: string; color: string; paper: string; duplex: string | null; sheets: number; sides: number;
+				}[]
+			).map((r) => ({ at: r.at, jobId: r.job_id, customerId: r.customer_id, customer: r.customer, size: r.size, color: r.color, paper: r.paper, duplex: r.duplex, sheets: r.sheets, sides: r.sides }));
+		},
+		/** Drops job rows older than `before`. Customer jobs are billing records and stay until `billedBefore`. */
+		prune(before: number, billedBefore = before) {
+			db.prepare('DELETE FROM jobs WHERE at < ? AND (customer_id IS NULL OR at < ?)').run(before, billedBefore);
 		}
 	};
 }

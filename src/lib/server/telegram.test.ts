@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { claimDraft, getDraft, saveClaimable } from './jobs.ts';
 import { openDb } from './db.ts';
-import { allowFile, pickFile, useLink } from './telegram.ts';
+import { adminConnectLink, allowFile, chatName, pickFile, useLink } from './telegram.ts';
 
 describe('telegram bot', () => {
 	it('takes the largest photo size and keeps document names', () => {
@@ -30,6 +30,8 @@ describe('telegram bot', () => {
 
 	it('refuses unknown or reused connect tokens', () => {
 		expect(useLink('not-a-real-token')).toBeNull();
+		// No bot name until the bot has started, so no link can be handed out.
+		expect(adminConnectLink()).toBeNull();
 	});
 
 	it('keeps chat authorizations until they expire or are dropped', () => {
@@ -43,5 +45,11 @@ describe('telegram bot', () => {
 		db.forgetChat(5);
 		db.renewChat(5, 4000);
 		expect(db.chatCustomer(5, 0)).toBeNull();
+	});
+
+	it('names a chat by person or group', () => {
+		expect(chatName({ id: 1, first_name: 'Ola', last_name: 'Nowak', username: 'olan' } as never)).toBe('Ola Nowak @olan');
+		expect(chatName({ id: 1, first_name: 'Jan' } as never)).toBe('Jan');
+		expect(chatName({ id: -5, title: 'Recepcja' } as never)).toBe('Recepcja');
 	});
 });

@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import { dateLocale, ui } from '$lib/i18n';
+import { adminCommand } from './botAdmin.ts';
 import { isActive, today } from './customers.ts';
 import { getDb } from './db.ts';
 import { config } from './config.ts';
@@ -40,6 +41,28 @@ export function connectLink(customer: number, now = Date.now()): string | null {
 	return `https://t.me/${botName}?start=${token}`;
 }
 
+// One-time tokens from the admin panel that make the opening chat an admin chat.
+const adminLinks = new Map<string, number>();
+/** Admin links are often sent to someone else, so they last a day. */
+export const ADMIN_LINK_TTL_H = 24;
+
+/** A one-time t.me link that adds the chat it is opened in to the admin chats. */
+export function adminConnectLink(now = Date.now()): string | null {
+	if (!botName) return null;
+	for (const [t, exp] of adminLinks) if (exp < now) adminLinks.delete(t);
+	const token = `a${randomBytes(18).toString('base64url')}`;
+	if (adminLinks.size >= MAX_LINKS) return null;
+	adminLinks.set(token, now + ADMIN_LINK_TTL_H * 60 * 60 * 1000);
+	return `https://t.me/${botName}?start=${token}`;
+}
+
+/** Uses up an admin connect token. True when it was valid. */
+function useAdminLink(token: string, now = Date.now()): boolean {
+	const exp = adminLinks.get(token);
+	adminLinks.delete(token);
+	return exp !== undefined && exp >= now;
+}
+
 /** Uses up a connect token. Returns its customer when it was valid. */
 export function useLink(token: string, now = Date.now()): number | null {
 	const l = links.get(token);
@@ -56,7 +79,39 @@ export function isAuthorized(chat: number, now = Date.now()): boolean {
 }
 
 type TgFile = { file_id: string; file_name?: string; file_size?: number; mime_type?: string };
-type Message = { chat: { id: number }; text?: string; document?: TgFile; photo?: TgFile[] };
+type Person = { first_name?: string; last_name?: string; username?: string };
+type Message = { chat: { id: number; title?: string } & Person; from?: Person; text?: string; document?: TgFile; photo?: TgFile[] };
+
+/** A readable name for a chat: the group title, or the person's name and @username. */
+export function chatName(c: { title?: string } & Person): string {
+	if (c.title) return c.title;
+	const name = [c.first_name, c.last_name].filter(Boolean).join(' ');
+	return [name, c.username && `@${c.username}`].filter(Boolean).join(' ') || '';
+}
+
+/** Adds an admin chat, or refreshes the name of one that is already there. */
+export function rememberAdmin(chat: number, name: string, add = false) {
+	const db = getDb();
+	const s = db.settings();
+	const known = s.adminChats.includes(chat);
+	if (!known && !add) return;
+	if (known && (!name || s.adminNames[chat] === name)) return;
+	db.saveSettings({
+		...s,
+		adminChats: known ? s.adminChats : [...s.adminChats, chat],
+		adminNames: name ? { ...s.adminNames, [chat]: name } : s.adminNames
+	});
+}
+
+/** Asks Telegram who a chat belongs to. Works once the person has written to the bot. */
+export async function lookupChat(chat: number): Promise<string> {
+	if (!config.telegramToken) return '';
+	try {
+		return chatName(await call<{ title?: string } & Person>(config.telegramToken, 'getChat', { chat_id: chat }, AbortSignal.timeout(5000)));
+	} catch {
+		return '';
+	}
+}
 type Update = { update_id: number; message?: Message };
 
 const recent = new Map<number, number[]>();
@@ -98,6 +153,11 @@ async function handle(token: string, m: Message) {
 	const chat = m.chat.id;
 	const start = m.text?.match(/^\/start(?:@\w+)?\s+([\w-]{10,64})$/);
 	if (start) {
+		if (adminLinks.has(start[1])) {
+			if (!useAdminLink(start[1])) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
+			rememberAdmin(chat, chatName(m.chat), true);
+			return reply(token, chat, `${ui.bot.admin.connected}\n\n${ui.bot.admin.help}`);
+		}
 		const customer = useLink(start[1]);
 		if (customer === null) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
 		getDb().authorizeChat(chat, customer, Date.now());
@@ -106,6 +166,12 @@ async function handle(token: string, m: Message) {
 	if (/^\/stop\b/.test(m.text ?? '')) {
 		getDb().forgetChat(chat);
 		return reply(token, chat, ui.bot.stopped);
+	}
+	if (/^\/id\b/.test(m.text ?? '')) return reply(token, chat, ui.bot.chatId(chat));
+	if (getDb().settings().adminChats.includes(chat)) rememberAdmin(chat, chatName(m.chat));
+	if (m.text && getDb().settings().adminChats.includes(chat)) {
+		const r = adminCommand(m.text, getDb(), config.timeZone);
+		if (r) return 'text' in r ? reply(token, chat, r.text) : sendDocument(token, chat, r.document, r.caption);
 	}
 	// Unknown chats get nothing downloaded or saved.
 	if (!isAuthorized(chat)) return reply(token, chat, ui.bot.notConnected(config.portalUrl));
@@ -137,6 +203,17 @@ export async function notifyPrinted(chat: number, job: { id: string; pin: string
 	getDb().renewChat(chat, Date.now());
 	const until = new Date(job.expires).toLocaleTimeString(dateLocale, { timeZone: config.timeZone, hour: '2-digit', minute: '2-digit' });
 	await reply(config.telegramToken, chat, ui.bot.printed({ ...job, until }));
+}
+
+/** Sends a text file, such as the billing CSV, as a Telegram document. */
+async function sendDocument(token: string, chat: number, doc: { name: string; data: string }, caption: string) {
+	const form = new FormData();
+	form.append('chat_id', String(chat));
+	form.append('caption', caption);
+	form.append('document', new Blob([doc.data], { type: 'text/csv' }), doc.name);
+	const res = await fetch(`${API}/bot${token}/sendDocument`, { method: 'POST', body: form });
+	const data = (await res.json()) as { ok: boolean; description?: string };
+	if (!data.ok) throw new Error(`Telegram sendDocument: ${data.description ?? res.status}`);
 }
 
 let running = false;
