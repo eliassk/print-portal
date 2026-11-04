@@ -27,7 +27,7 @@ Built for and tested on a **Konica Minolta bizhub C224e**. Other bizhub models t
 
 | 1. Choose a file | 2. Check and send | 3. Pick it up |
 | --- | --- | --- |
-| Scan the QR code on the printer and upload a PDF, Office file or photos. | Pick copies, size, colour, duplex and paper. The preview is the exact PDF the printer gets. | Enter the job ID and PIN at the printer: **Box → System → Secure Print**. |
+| Scan the QR code on the printer and upload a PDF, Office file or photos. | Pick copies, size, colour, duplex and paper. The preview is the exact PDF the printer gets. | Enter the job ID and PIN at the printer: **home key → Secure Print**, then Print and Start. |
 
 <table>
 <tr>
@@ -191,7 +191,7 @@ To check a printer before deploying, stand at it and send a test page:
 pnpm send-secure scripts/test-page.pdf --host 192.168.1.50 --id 203 --pin 2030
 ```
 
-Release it at the panel: **Box → System → Secure Print** (Polish panel: **Skrzynka → System → Wydruk bezpieczny**), ID `203`, PIN `2030`.
+Release it at the panel: **home key → Secure Print** (Polish panel: **Bezpieczny wydruk**), ID `203`, PIN `2030`.
 `--dry` writes `secure-job.prn` without sending. Other flags: `--mono`, `--duplex long|short`, `--a3`, `--copies 2`, `--paper thick2`.
 
 ## Internals

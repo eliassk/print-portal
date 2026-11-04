@@ -142,7 +142,7 @@ export const en: typeof pl = {
 	validFor: (mmss: string) => `Valid for ${mmss}`,
 	expired: 'The PIN has expired. Send the file again.',
 	atPrinter: 'At the printer',
-	steps: ['Press Box.', 'Choose System → Secure Print.', 'Enter the ID and PIN, then Start.'],
+	steps: ['Press the home key next to the screen.', 'Tap Secure Print.', 'Enter the ID and PIN, then tap ✓.', 'Select the document, tap Print, then Start.'],
 	printAnother: 'Print another',
 	tonerLabel: 'Toner',
 	toner: { black: 'Black', cyan: 'Cyan', magenta: 'Magenta', yellow: 'Yellow' },
@@ -161,7 +161,7 @@ export const en: typeof pl = {
 		tooBig: 'This file is too big for the bot (Telegram allows 20 MB). Open the portal on the building Wi-Fi and choose the file there.',
 		rate: 'Many files were sent in a row. Wait 10 minutes.',
 		printed: (j: { id: string; pin: string; until: string; name: string; sheets: number }) =>
-			`Sent to the printer: ${j.name}\n\nJob ID: ${j.id}\nPIN: ${j.pin}\n\nPick it up at the printer by ${j.until}: Box → System → Secure Print, enter the ID and PIN. After that the printer deletes the print.\n\nYou can forward this message to whoever picks up the print.`
+			`Sent to the printer: ${j.name}\n\nJob ID: ${j.id}\nPIN: ${j.pin}\n\nPick it up at the printer by ${j.until}: home key → Secure Print, enter the ID and PIN, then Print and Start. After that the printer deletes the print.\n\nYou can forward this message to whoever picks up the print.`
 	},
 	telegram: {
 		title: 'File from Telegram',
@@ -232,7 +232,7 @@ export const en: typeof pl = {
 		steps: [
 			{ title: 'Choose a file', body: 'A document or a photo, then set the paper and colour.' },
 			{ title: 'Send to the printer', body: 'The screen shows a job ID and a PIN.' },
-			{ title: 'Pick up at the printer', body: 'Box → System → Secure Print, enter the ID and PIN.' }
+			{ title: 'Pick up at the printer', body: 'Home key → Secure Print, enter the ID and PIN, then Print and Start.' }
 		],
 		privacy: 'Files are not kept. The print waits for the PIN for at most 60 minutes.'
 	}

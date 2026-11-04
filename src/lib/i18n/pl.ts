@@ -144,7 +144,7 @@ export const pl = {
 	validFor: (mmss: string) => `Ważny jeszcze ${mmss}`,
 	expired: 'PIN wygasł. Wyślij plik jeszcze raz.',
 	atPrinter: 'Przy drukarce',
-	steps: ['Naciśnij Skrzynka.', 'Wybierz System → Wydruk bezpieczny.', 'Wpisz ID i PIN, potem Start.'],
+	steps: ['Naciśnij przycisk z domkiem obok ekranu.', 'Dotknij Bezpieczny wydruk.', 'Wpisz ID i PIN, potem dotknij ✓.', 'Zaznacz dokument, dotknij Drukuj, potem Start.'],
 	printAnother: 'Drukuj kolejny',
 	tonerLabel: 'Toner',
 	toner: { black: 'Czarny', cyan: 'Cyjan', magenta: 'Magenta', yellow: 'Żółty' } satisfies Record<Toner['key'], string>,
@@ -164,7 +164,7 @@ export const pl = {
 		tooBig: 'Ten plik jest za duży dla bota (limit Telegrama to 20 MB). Otwórz portal w Wi-Fi budynku i wybierz plik tam.',
 		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.',
 		printed: (j: { id: string; pin: string; until: string; name: string; sheets: number }) =>
-			`Wysłano do drukarki: ${j.name}\n\nID zadania: ${j.id}\nPIN: ${j.pin}\n\nOdbierz przy drukarce do ${j.until}: Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN. Po tym czasie drukarka sama usunie wydruk.\n\nMożesz przekazać tę wiadomość osobie, która odbierze wydruk.`
+			`Wysłano do drukarki: ${j.name}\n\nID zadania: ${j.id}\nPIN: ${j.pin}\n\nOdbierz przy drukarce do ${j.until}: domek → Bezpieczny wydruk, wpisz ID i PIN, potem Drukuj i Start. Po tym czasie drukarka sama usunie wydruk.\n\nMożesz przekazać tę wiadomość osobie, która odbierze wydruk.`
 	},
 	telegram: {
 		title: 'Plik z Telegrama',
@@ -235,7 +235,7 @@ export const pl = {
 		steps: [
 			{ title: 'Wybierz plik', body: 'Dokument lub zdjęcie, ustaw papier i kolor.' },
 			{ title: 'Wyślij do drukarki', body: 'Na ekranie zobaczysz ID zadania i PIN.' },
-			{ title: 'Odbierz przy drukarce', body: 'Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN.' }
+			{ title: 'Odbierz przy drukarce', body: 'Domek → Bezpieczny wydruk, wpisz ID i PIN, potem Drukuj i Start.' }
 		],
 		privacy: 'Pliki nie są przechowywane. Wydruk czeka na PIN najwyżej 60 minut.'
 	}
