@@ -1,6 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
-import { passwordMatches, signAdmin, verifyAdmin } from '$lib/server/auth';
+import { lookupChat, rememberAdmin } from '$lib/server/telegram';
+import { ADMIN_COOKIE as COOKIE, adminEnabled as enabled, isAdmin } from '$lib/server/admin';
+import { passwordMatches, signAdmin } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { isActive, newCode, normalizeCode, parseDay, parseNetworks, today, type Customer } from '$lib/server/customers';
 import { startOfDay } from '$lib/server/limits';
@@ -8,8 +10,6 @@ import { printerStatus } from '$lib/server/status';
 import { ui } from '$lib/i18n';
 import type { Actions, PageServerLoad } from './$types';
 
-const COOKIE = 'admin';
-const enabled = () => config.adminPassword.length > 0 && config.adminSecret.length >= 32;
 
 /** Why a customer can or cannot print today. */
 function customerState(c: Customer, day: string): 'active' | 'off' | 'upcoming' | 'ended' {
@@ -46,7 +46,7 @@ function store(save: () => void) {
 
 export const load: PageServerLoad = async ({ cookies }) => {
 	if (!enabled()) return { state: 'disabled' as const };
-	if (!verifyAdmin(config.adminSecret, cookies.get(COOKIE))) return { state: 'login' as const };
+	if (!isAdmin(cookies)) return { state: 'login' as const };
 	const db = getDb();
 	const now = Date.now();
 	return {
@@ -73,27 +73,46 @@ export const actions: Actions = {
 		redirect(303, '/admin');
 	},
 	save: async ({ request, cookies }) => {
-		if (!enabled() || !verifyAdmin(config.adminSecret, cookies.get(COOKIE))) return fail(401);
+		if (!isAdmin(cookies)) return fail(401);
 		const f = await request.formData();
 		const n = (k: string, min: number, max: number) => Math.min(max, Math.max(min, Math.round(Number(f.get(k)) || min)));
-		getDb().saveSettings({ colorAllowed: f.get('colorAllowed') === 'on', dailyPages: n('dailyPages', 1, 1000), maxPages: n('maxPages', 1, 500) });
+		// Admin chats have their own actions, so a stale page never drops a chat that joined meanwhile.
+		const s = getDb().settings();
+		getDb().saveSettings({ ...s, colorAllowed: f.get('colorAllowed') === 'on', dailyPages: n('dailyPages', 1, 1000), maxPages: n('maxPages', 1, 500) });
 		return { saved: true };
 	},
 	addCustomer: async ({ request, cookies }) => {
-		if (!enabled() || !verifyAdmin(config.adminSecret, cookies.get(COOKIE))) return fail(401);
+		if (!isAdmin(cookies)) return fail(401);
 		const c = readCustomer(await request.formData());
 		if ('error' in c) return fail(400, { customerError: c.error });
 		return store(() => getDb().addCustomer(c));
 	},
 	updateCustomer: async ({ request, cookies }) => {
-		if (!enabled() || !verifyAdmin(config.adminSecret, cookies.get(COOKIE))) return fail(401);
+		if (!isAdmin(cookies)) return fail(401);
 		const f = await request.formData();
 		const c = readCustomer(f);
 		if ('error' in c) return fail(400, { customerError: c.error });
 		return store(() => getDb().updateCustomer({ ...c, id: Number(f.get('id')) }));
 	},
+	addAdminChat: async ({ request, cookies }) => {
+		if (!isAdmin(cookies)) return fail(401);
+		// Group chats have negative IDs.
+		const id = Number(String((await request.formData()).get('chat') ?? '').trim());
+		if (!Number.isSafeInteger(id) || id === 0) return fail(400, { adminChatError: ui.admin.badChatId });
+		rememberAdmin(id, await lookupChat(id), true);
+		return { adminSaved: true };
+	},
+	removeAdminChat: async ({ request, cookies }) => {
+		if (!isAdmin(cookies)) return fail(401);
+		const id = Number((await request.formData()).get('chat'));
+		const db = getDb();
+		const s = db.settings();
+		const { [id]: _, ...adminNames } = s.adminNames;
+		db.saveSettings({ ...s, adminChats: s.adminChats.filter((c) => c !== id), adminNames });
+		return { adminSaved: true };
+	},
 	deleteCustomer: async ({ request, cookies }) => {
-		if (!enabled() || !verifyAdmin(config.adminSecret, cookies.get(COOKIE))) return fail(401);
+		if (!isAdmin(cookies)) return fail(401);
 		getDb().deleteCustomer(Number((await request.formData()).get('id')));
 		return { customerSaved: true };
 	}

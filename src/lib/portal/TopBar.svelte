@@ -14,18 +14,23 @@
 		{:else}
 			<span class="brand"><span class="logo"><Icon name="printer" size={18} /></span>{ui.appName}</span>
 		{/if}
-		<ol class="steps" aria-label={ui.stepsLabel}>
-			{#each SCREENS as s, i (s)}
-				<li class:done={i < at} class:now={s === p.screen}><span>{i + 1}</span>{ui.stepNames[i]}</li>
-			{/each}
-		</ol>
+		<!-- The steps mean nothing until the code is entered. -->
+		{#if p.customer}
+			<ol class="steps" aria-label={ui.stepsLabel}>
+				{#each SCREENS as s, i (s)}
+					<li class:done={i < at} class:now={s === p.screen}><span>{i + 1}</span>{ui.stepNames[i]}</li>
+				{/each}
+			</ol>
+		{/if}
 		{#if p.printer}
 			<span class="chip" class:off={!p.printer.online}><i></i>{ui.printerLabel}: {p.printer.online ? ui.printerOk : ui.printerOff}</span>
 		{/if}
 	</div>
-	<div class="progress" aria-hidden="true">
-		<i style="width: {((at + 1) / SCREENS.length) * 100}%"></i>
-	</div>
+	{#if p.customer}
+		<div class="progress" aria-hidden="true">
+			<i style="width: {((at + 1) / SCREENS.length) * 100}%"></i>
+		</div>
+	{/if}
 </header>
 
 <style>

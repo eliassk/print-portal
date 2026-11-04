@@ -52,6 +52,11 @@ export const MARGINS = [5, 10, 15, 20] as const;
 export const NUP_CHOICES: Record<Kind, readonly PrintOptions['nup'][]> = { doc: [1, 2, 4], photo: [1, 2, 4, 9] };
 
 /** Sheets of paper used, so the summary can show it before sending. */
+/** Printed sides: what a copier counts as clicks. */
+export function sideCount(items: number, o: Pick<PrintOptions, 'copies' | 'nup'>): number {
+	return Math.ceil(items / o.nup) * o.copies;
+}
+
 export function sheetCount(items: number, o: Pick<PrintOptions, 'copies' | 'duplex' | 'nup'>): number {
 	const faces = Math.ceil(items / o.nup);
 	return Math.ceil(faces / (o.duplex === 'off' ? 1 : 2)) * o.copies;

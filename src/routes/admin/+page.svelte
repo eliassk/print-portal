@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import AdminBar from '$lib/AdminBar.svelte';
+	import { api, message } from '$lib/api';
 	import Icon from '$lib/Icon.svelte';
 	import { dateLocale, ui } from '$lib/i18n';
 	import TrayList from '$lib/TrayList.svelte';
@@ -21,6 +23,32 @@
 	type C = { id?: number; name: string; code: string; enabled: boolean; activeFrom: string | null; activeUntil: string | null; networks: string };
 	const blank: C = { name: '', code: '', enabled: true, activeFrom: null, activeUntil: null, networks: '' };
 	let adding = $state(false);
+	let tgError = $state('');
+	let adminLink = $state<{ url: string; hours: number } | null>(null);
+	let copied = $state(false);
+	let linkInput = $state<HTMLInputElement>();
+
+	async function connectAdminChat() {
+		tgError = '';
+		copied = false;
+		try {
+			adminLink = await api<{ url: string; hours: number }>('/admin/telegram');
+		} catch (e) {
+			tgError = message(e);
+		}
+	}
+
+	async function copyLink() {
+		if (!adminLink) return;
+		try {
+			await navigator.clipboard.writeText(adminLink.url);
+		} catch {
+			// The clipboard API needs HTTPS; on plain HTTP the selected text can be copied by hand.
+			linkInput?.select();
+			document.execCommand('copy');
+		}
+		copied = true;
+	}
 </script>
 
 <svelte:head><title>{ui.admin.title} · {ui.appName}</title></svelte:head>
@@ -63,16 +91,7 @@
 	{@const toners = [...data.status.toner].sort((a, b) => TONER_ORDER.indexOf(a.key) - TONER_ORDER.indexOf(b.key))}
 	{@const waiting = data.recent.filter((j) => j.expires > data.now).length}
 	{@const activeCustomers = data.customers.filter((c) => c.state === 'active').length}
-	<header class="top">
-		<div class="top-in">
-			<span class="brand"><span class="logo sm"><Icon name="printer" size={18} /></span><span class="bt">{ui.admin.title}</span></span>
-			<nav>
-				<a href="/">{ui.admin.portal}</a>
-				<a href="/karta">{ui.admin.cardShort}</a>
-				<form method="POST" action="?/logout"><button class="link">{ui.admin.logout}</button></form>
-			</nav>
-		</div>
-	</header>
+	<AdminBar current="panel" />
 
 	<main>
 		<section class="stats" aria-label={ui.admin.today}>
@@ -125,6 +144,60 @@
 			</label>
 			<button class="btn small">{ui.admin.save}</button>
 		</form>
+
+		<section class="card admins">
+			<div class="ch">
+				<h2>{ui.admin.adminChats} <span class="count">{data.settings.adminChats.length}</span></h2>
+				{#if !adminLink}<button type="button" class="btn small" onclick={connectAdminChat}><Icon name="plus" size={16} />{ui.admin.addAdmin}</button>{/if}
+			</div>
+			<p class="muted">{ui.admin.adminChatsHint}</p>
+			{#if tgError || form?.adminChatError}<p class="err">{tgError || form?.adminChatError}</p>{/if}
+
+			{#if adminLink}
+				<div class="share">
+					<div class="share-head">
+						<b>{ui.admin.shareTitle}</b>
+						<button type="button" class="x" onclick={() => (adminLink = null)} aria-label={ui.admin.cancel}>×</button>
+					</div>
+					<p>{ui.admin.connectAdminHint(adminLink.hours)}</p>
+					<input bind:this={linkInput} readonly value={adminLink.url} onfocus={(e) => e.currentTarget.select()} aria-label={ui.admin.shareTitle} />
+					<div class="share-acts">
+						<button type="button" class="btn small" onclick={copyLink}><Icon name={copied ? 'check' : 'clipboard'} size={16} />{copied ? ui.admin.copied : ui.admin.copyLink}</button>
+						<a class="btn small sec" href={adminLink.url} target="_blank" rel="noopener"><Icon name="send" size={16} />{ui.admin.openLink}</a>
+					</div>
+				</div>
+			{/if}
+
+			{#if data.settings.adminChats.length}
+				<ul class="chats">
+					{#each data.settings.adminChats as c (c)}
+						{@const who = data.settings.adminNames[c]}
+						<li>
+							<span class="avatar" aria-hidden="true">{(who || '?').replace('@', '').charAt(0).toUpperCase()}</span>
+							<span class="who">
+								<b class:unknown={!who}>{who || ui.admin.unknownChat}</b>
+								<small>ID {c}</small>
+							</span>
+							<form method="POST" action="?/removeAdminChat" use:enhance={({ cancel }) => {
+								if (!confirm(ui.admin.confirmRemoveChat(who || String(c)))) cancel();
+							}}>
+								<input type="hidden" name="chat" value={c} /><button class="link del">{ui.admin.deleteCustomer}</button>
+							</form>
+						</li>
+					{/each}
+				</ul>
+			{:else if !adminLink}
+				<p class="empty">{ui.admin.noAdmins}</p>
+			{/if}
+
+			<details class="byid">
+				<summary>{ui.admin.addById}</summary>
+				<form method="POST" action="?/addAdminChat" use:enhance>
+					<input name="chat" inputmode="numeric" placeholder={ui.admin.chatIdPlaceholder} aria-label={ui.admin.chatIdPlaceholder} required />
+					<button class="btn small sec">{ui.admin.add}</button>
+				</form>
+			</details>
+		</section>
 
 		<section class="card customers">
 			<div class="ch">
@@ -262,11 +335,6 @@
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
-	.logo.sm {
-		width: 32px;
-		height: 32px;
-		border-radius: 10px;
-	}
 	.login {
 		width: 100%;
 		display: grid;
@@ -295,56 +363,6 @@
 		text-decoration: none;
 	}
 
-	/* Top bar */
-	.top {
-		position: sticky;
-		top: 0;
-		z-index: 2;
-		background: color-mix(in srgb, var(--surface) 88%, transparent);
-		backdrop-filter: saturate(1.4) blur(12px);
-		border-bottom: 1px solid var(--line);
-	}
-	.top-in {
-		max-width: 1120px;
-		margin: 0 auto;
-		min-height: 60px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 16px;
-		padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
-	}
-	.brand {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		font-weight: 650;
-		letter-spacing: -0.01em;
-	}
-	nav {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		font-size: 14px;
-	}
-	@media (max-width: 520px) {
-		.bt {
-			display: none;
-		}
-	}
-	nav a {
-		white-space: nowrap;
-		padding: 6px 10px;
-		border-radius: 8px;
-		color: var(--muted);
-		text-decoration: none;
-		font-weight: 550;
-	}
-	nav a:hover {
-		background: var(--sunk);
-		color: var(--fg);
-	}
-
 	/* Layout */
 	main {
 		max-width: 1120px;
@@ -356,10 +374,11 @@
 	}
 	@media (min-width: 900px) {
 		main {
-			grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-			align-items: start;
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			align-items: stretch;
 		}
 		.stats,
+		.printer,
 		.customers,
 		.recent {
 			grid-column: 1 / -1;
@@ -369,6 +388,7 @@
 		padding: 20px;
 		gap: 14px;
 	}
+
 	.ch {
 		display: flex;
 		align-items: center;
@@ -480,6 +500,11 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 10px 24px;
 	}
+	@media (min-width: 900px) {
+		.toners {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
 	@media (max-width: 560px) {
 		.toners {
 			grid-template-columns: minmax(0, 1fr);
@@ -556,6 +581,123 @@
 		color: var(--muted);
 		font-size: 13px;
 	}
+	.share {
+		display: grid;
+		gap: 10px;
+		padding: 14px;
+		border: 1px solid var(--accent);
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface));
+	}
+	.share-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.share p {
+		margin: 0;
+		color: var(--muted);
+		font-size: 13.5px;
+	}
+	.share input {
+		width: 100%;
+		font: 13px var(--mono);
+		border: 1px solid var(--line-strong);
+		border-radius: 10px;
+		padding: 9px 10px;
+		background: var(--surface);
+		color: var(--fg);
+	}
+	.share-acts {
+		display: flex;
+		gap: 8px;
+	}
+	.share-acts a {
+		text-decoration: none;
+	}
+	.x {
+		border: 0;
+		background: none;
+		color: var(--muted);
+		font-size: 22px;
+		line-height: 1;
+		cursor: pointer;
+		padding: 0 4px;
+	}
+	.chats {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+	}
+	.chats li {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 14px;
+	}
+	.chats li + li {
+		border-top: 1px solid var(--line);
+	}
+	.avatar {
+		flex: none;
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		display: grid;
+		place-items: center;
+		font-weight: 650;
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+	.who {
+		flex: 1;
+		min-width: 0;
+		display: grid;
+	}
+	.who b {
+		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.who b.unknown {
+		color: var(--muted);
+		font-weight: 500;
+		font-style: italic;
+	}
+	.who small {
+		color: var(--muted);
+		font: 12px var(--mono);
+	}
+	.empty {
+		margin: 0;
+		padding: 14px;
+		border: 1px dashed var(--line-strong);
+		border-radius: 12px;
+		color: var(--muted);
+		font-size: 14px;
+		text-align: center;
+	}
+	.byid summary {
+		cursor: pointer;
+		color: var(--muted);
+		font-size: 13.5px;
+		width: fit-content;
+	}
+	.byid summary:hover {
+		color: var(--fg);
+	}
+	.byid form {
+		display: flex;
+		gap: 8px;
+		margin-top: 10px;
+	}
+	.byid input {
+		flex: 1;
+		min-width: 0;
+	}
 	.settings .btn {
 		margin-top: 4px;
 	}
@@ -628,7 +770,7 @@
 	.cust + .cust {
 		border-top: 1px solid var(--line);
 	}
-	summary {
+	.cust summary {
 		list-style: none;
 		display: grid;
 		grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1.6fr) auto;
@@ -637,13 +779,13 @@
 		padding: 14px 16px;
 		cursor: pointer;
 	}
-	summary::-webkit-details-marker {
+	.cust summary::-webkit-details-marker {
 		display: none;
 	}
-	summary:hover {
+	.cust summary:hover {
 		background: var(--sunk);
 	}
-	details[open] summary {
+	.cust details[open] summary {
 		background: var(--sunk);
 	}
 	.cname {
@@ -697,7 +839,7 @@
 		color: var(--muted);
 	}
 	@media (max-width: 760px) {
-		summary {
+		.cust summary {
 			grid-template-columns: minmax(0, 1fr) auto;
 			gap: 8px 12px;
 		}
