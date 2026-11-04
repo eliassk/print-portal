@@ -1,11 +1,21 @@
 import type { Handle, ServerInit } from '@sveltejs/kit';
-import { lang } from '$lib/i18n';
+import { json } from '@sveltejs/kit';
+import { lang, ui } from '$lib/i18n';
 import { newDeviceId } from '$lib/server/auth';
+import { config } from '$lib/server/config';
+import { resolveCustomer, today } from '$lib/server/customers';
+import { getDb } from '$lib/server/db';
 import { startBot } from '$lib/server/telegram';
+
+/** Endpoints that work before a customer is known. */
+const OPEN_API = new Set(['/api/customer', '/api/printer']);
 
 export const init: ServerInit = () => startBot();
 
-/** Gives each browser a random device id, so daily limits count per phone. */
+/**
+ * Gives each browser a random device id, so daily limits count per phone,
+ * and refuses portal calls from people without an active customer.
+ */
 export const handle: Handle = async ({ event, resolve }) => {
 	let device = event.cookies.get('device');
 	if (!device || !/^[\w-]{16,32}$/.test(device)) {
@@ -15,5 +25,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			secure: false, maxAge: 60 * 60 * 24 * 365 });
 	}
 	event.locals.device = device;
+	event.locals.customer = resolveCustomer(getDb().customers(), event.cookies.get('customer'), event.getClientAddress(), today(config.timeZone));
+	const path = event.url.pathname;
+	if (path.startsWith('/api/') && !OPEN_API.has(path) && !event.locals.customer) return json({ error: ui.errors.noCustomer }, { status: 401 });
 	return resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', lang) });
 };

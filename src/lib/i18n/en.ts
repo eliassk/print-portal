@@ -142,7 +142,7 @@ export const en: typeof pl = {
 	validFor: (mmss: string) => `Valid for ${mmss}`,
 	expired: 'The PIN has expired. Send the file again.',
 	atPrinter: 'At the printer',
-	steps: ['Press Box.', 'Choose System → Secure Print.', 'Enter the ID and PIN, then Start.'],
+	steps: ['Press the home key next to the screen.', 'Tap Secure Print.', 'Enter the ID and PIN, then tap ✓.', 'Select the document, tap Print, then Start.'],
 	printAnother: 'Print another',
 	tonerLabel: 'Toner',
 	toner: { black: 'Black', cyan: 'Cyan', magenta: 'Magenta', yellow: 'Yellow' },
@@ -161,7 +161,7 @@ export const en: typeof pl = {
 		tooBig: 'This file is too big for the bot (Telegram allows 20 MB). Open the portal on the building Wi-Fi and choose the file there.',
 		rate: 'Many files were sent in a row. Wait 10 minutes.',
 		printed: (j: { id: string; pin: string; until: string; name: string; sheets: number }) =>
-			`Sent to the printer: ${j.name}\n\nJob ID: ${j.id}\nPIN: ${j.pin}\n\nPick it up at the printer by ${j.until}: Box → System → Secure Print, enter the ID and PIN. After that the printer deletes the print.\n\nYou can forward this message to whoever picks up the print.`
+			`Sent to the printer: ${j.name}\n\nJob ID: ${j.id}\nPIN: ${j.pin}\n\nPick it up at the printer by ${j.until}: home key → Secure Print, enter the ID and PIN, then Print and Start. After that the printer deletes the print.\n\nYou can forward this message to whoever picks up the print.`
 	},
 	telegram: {
 		title: 'File from Telegram',
@@ -175,7 +175,18 @@ export const en: typeof pl = {
 			'Print confidential documents straight from the portal.'
 		]
 	},
+	customer: {
+		title: 'Enter your access code',
+		hint: 'You only need to do this once on this device.',
+		label: 'Access code',
+		submit: 'Continue',
+		checking: 'Checking…',
+		printingFor: (name: string) => `Printing for ${name}`,
+		signOut: 'Change code'
+	},
 	errors: {
+		noCustomer: 'Enter your access code first.',
+		badCustomerCode: 'This code does not work. Check it, or ask at the reception whether it is still active.',
 		rangeInvalid: 'That page range is not clear. Type e.g. 1–3, 5.',
 		cellRange: 'That cell range is not clear. Type e.g. A1:F30.',
 		sheetPick: 'Choose at least one sheet.',
@@ -196,6 +207,33 @@ export const en: typeof pl = {
 		generic: 'Something went wrong. Try again.'
 	},
 	admin: {
+		portal: 'Portal',
+		cardShort: 'QR card',
+		stats: { prints: 'Prints today', sheets: 'Sheets today', waiting: 'Waiting for PIN', customers: 'Active customers' },
+		colorHint: 'When off, everyone prints in black and white.',
+		dailyHint: 'Counted per phone or computer, resets at midnight.',
+		maxHint: 'Longer files are refused before printing.',
+		states: { active: 'Active', off: 'Switched off', upcoming: 'Not started', ended: 'Ended' },
+		period: { always: 'No time limit', from: (d: string) => `from ${d}`, until: (d: string) => `until ${d}`, range: (a: string, b: string) => `${a} – ${b}` },
+		networksNone: 'Code only',
+		newCustomer: 'New customer',
+		edit: 'Edit',
+		cancel: 'Cancel',
+		enabledLabel: 'Can print',
+		networksHint: 'One range per line. People on these networks print without a code.',
+		customers: 'Customers',
+		customersHint: 'Only people with an active code can print or connect Telegram. Networks sign people in without a code, e.g. 10.20.0.0/16 for the office VLAN.',
+		noCustomers: 'No customers yet. Until you add one, nobody can print.',
+		customerCols: { name: 'Name', code: 'Code', enabled: 'On', from: 'Active from', until: 'Active until', networks: 'Auto sign-in networks', state: 'State' },
+		codeAuto: 'empty = generate',
+		addCustomer: 'Add customer',
+		deleteCustomer: 'Delete',
+		confirmDelete: (name: string) => `Delete ${name}? Their codes and Telegram chats stop working.`,
+		active: 'Active',
+		inactive: 'Inactive',
+		codeTaken: 'This code is already used by another customer.',
+		nameMissing: 'Enter a name.',
+		customer: 'Customer',
 		title: 'Admin panel',
 		login: 'Log in',
 		loginHint: 'Printer status, settings and recent prints.',
@@ -232,7 +270,7 @@ export const en: typeof pl = {
 		steps: [
 			{ title: 'Choose a file', body: 'A document or a photo, then set the paper and colour.' },
 			{ title: 'Send to the printer', body: 'The screen shows a job ID and a PIN.' },
-			{ title: 'Pick up at the printer', body: 'Box → System → Secure Print, enter the ID and PIN.' }
+			{ title: 'Pick up at the printer', body: 'Home key → Secure Print, enter the ID and PIN, then Print and Start.' }
 		],
 		privacy: 'Files are not kept. The print waits for the PIN for at most 60 minutes.'
 	}

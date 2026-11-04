@@ -61,5 +61,5 @@ if (values.dry) {
 		process.exit(1);
 	}
 	await sendRaw(values.host, Number(values.port), job);
-	console.log(`Sent to ${values.host}:${values.port}. At the panel: Skrzynka → System → Wydruk bezpieczny, ID ${values.id}, PIN ${values.pin}.`);
+	console.log(`Sent to ${values.host}:${values.port}. At the panel: home key → Bezpieczny wydruk, ID ${values.id}, PIN ${values.pin}.`);
 }

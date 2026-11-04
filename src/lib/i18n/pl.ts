@@ -144,7 +144,7 @@ export const pl = {
 	validFor: (mmss: string) => `Ważny jeszcze ${mmss}`,
 	expired: 'PIN wygasł. Wyślij plik jeszcze raz.',
 	atPrinter: 'Przy drukarce',
-	steps: ['Naciśnij Skrzynka.', 'Wybierz System → Wydruk bezpieczny.', 'Wpisz ID i PIN, potem Start.'],
+	steps: ['Naciśnij przycisk z domkiem obok ekranu.', 'Dotknij Bezpieczny wydruk.', 'Wpisz ID i PIN, potem dotknij ✓.', 'Zaznacz dokument, dotknij Drukuj, potem Start.'],
 	printAnother: 'Drukuj kolejny',
 	tonerLabel: 'Toner',
 	toner: { black: 'Czarny', cyan: 'Cyjan', magenta: 'Magenta', yellow: 'Żółty' } satisfies Record<Toner['key'], string>,
@@ -164,7 +164,7 @@ export const pl = {
 		tooBig: 'Ten plik jest za duży dla bota (limit Telegrama to 20 MB). Otwórz portal w Wi-Fi budynku i wybierz plik tam.',
 		rate: 'Wysłano dużo plików pod rząd. Odczekaj 10 minut.',
 		printed: (j: { id: string; pin: string; until: string; name: string; sheets: number }) =>
-			`Wysłano do drukarki: ${j.name}\n\nID zadania: ${j.id}\nPIN: ${j.pin}\n\nOdbierz przy drukarce do ${j.until}: Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN. Po tym czasie drukarka sama usunie wydruk.\n\nMożesz przekazać tę wiadomość osobie, która odbierze wydruk.`
+			`Wysłano do drukarki: ${j.name}\n\nID zadania: ${j.id}\nPIN: ${j.pin}\n\nOdbierz przy drukarce do ${j.until}: domek → Bezpieczny wydruk, wpisz ID i PIN, potem Drukuj i Start. Po tym czasie drukarka sama usunie wydruk.\n\nMożesz przekazać tę wiadomość osobie, która odbierze wydruk.`
 	},
 	telegram: {
 		title: 'Plik z Telegrama',
@@ -178,7 +178,18 @@ export const pl = {
 			'Poufne dokumenty drukuj bezpośrednio z portalu.'
 		]
 	},
+	customer: {
+		title: 'Wpisz kod dostępu',
+		hint: 'Robisz to tylko raz na tym urządzeniu.',
+		label: 'Kod dostępu',
+		submit: 'Dalej',
+		checking: 'Sprawdzam…',
+		printingFor: (name: string) => `Drukujesz dla: ${name}`,
+		signOut: 'Zmień kod'
+	},
 	errors: {
+		noCustomer: 'Najpierw wpisz kod dostępu.',
+		badCustomerCode: 'Ten kod nie działa. Sprawdź go albo zapytaj w recepcji, czy jest nadal aktywny.',
 		rangeInvalid: 'Nie rozumiem zakresu. Wpisz np. 1–3, 5.',
 		cellRange: 'Nie rozumiem zakresu komórek. Wpisz np. A1:F30.',
 		sheetPick: 'Wybierz co najmniej jeden arkusz.',
@@ -199,6 +210,33 @@ export const pl = {
 		generic: 'Coś poszło nie tak. Spróbuj ponownie.'
 	},
 	admin: {
+		portal: 'Portal',
+		cardShort: 'Karta QR',
+		stats: { prints: 'Wydruki dziś', sheets: 'Kartki dziś', waiting: 'Czeka na PIN', customers: 'Aktywni klienci' },
+		colorHint: 'Po wyłączeniu wszyscy drukują w czerni i bieli.',
+		dailyHint: 'Liczony na telefon lub komputer, zeruje się o północy.',
+		maxHint: 'Dłuższe pliki są odrzucane przed drukiem.',
+		states: { active: 'Aktywny', off: 'Wyłączony', upcoming: 'Jeszcze nie aktywny', ended: 'Zakończony' },
+		period: { always: 'Bez limitu czasu', from: (d: string) => `od ${d}`, until: (d: string) => `do ${d}`, range: (a: string, b: string) => `${a} – ${b}` },
+		networksNone: 'Tylko kod',
+		newCustomer: 'Nowy klient',
+		edit: 'Edytuj',
+		cancel: 'Anuluj',
+		enabledLabel: 'Może drukować',
+		networksHint: 'Jeden zakres w linii. Osoby z tych sieci drukują bez kodu.',
+		customers: 'Klienci',
+		customersHint: 'Drukować i łączyć Telegram mogą tylko osoby z aktywnym kodem. Sieci logują bez kodu, np. 10.20.0.0/16 dla VLAN-u biura.',
+		noCustomers: 'Nie ma jeszcze klientów. Dopóki nie dodasz pierwszego, nikt nie wydrukuje.',
+		customerCols: { name: 'Nazwa', code: 'Kod', enabled: 'Wł.', from: 'Aktywny od', until: 'Aktywny do', networks: 'Sieci bez kodu', state: 'Stan' },
+		codeAuto: 'puste = wygeneruj',
+		addCustomer: 'Dodaj klienta',
+		deleteCustomer: 'Usuń',
+		confirmDelete: (name: string) => `Usunąć ${name}? Jego kod i czaty Telegram przestaną działać.`,
+		active: 'Aktywny',
+		inactive: 'Nieaktywny',
+		codeTaken: 'Ten kod ma już inny klient.',
+		nameMissing: 'Wpisz nazwę.',
+		customer: 'Klient',
 		title: 'Panel administratora',
 		login: 'Zaloguj',
 		loginHint: 'Stan drukarki, ustawienia i ostatnie wydruki.',
@@ -235,7 +273,7 @@ export const pl = {
 		steps: [
 			{ title: 'Wybierz plik', body: 'Dokument lub zdjęcie, ustaw papier i kolor.' },
 			{ title: 'Wyślij do drukarki', body: 'Na ekranie zobaczysz ID zadania i PIN.' },
-			{ title: 'Odbierz przy drukarce', body: 'Skrzynka → System → Wydruk bezpieczny, wpisz ID i PIN.' }
+			{ title: 'Odbierz przy drukarce', body: 'Domek → Bezpieczny wydruk, wpisz ID i PIN, potem Drukuj i Start.' }
 		],
 		privacy: 'Pliki nie są przechowywane. Wydruk czeka na PIN najwyżej 60 minut.'
 	}

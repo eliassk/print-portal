@@ -39,7 +39,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		return refuse(502, ui.errors.printer);
 	}
 	const expires = now + config.pinTtlMin * 60 * 1000;
-	db.addJob({ at: now, jobId: id, device: locals.device, sheets, size: o.size, paper: o.paper, color: o.color, expires });
+	db.addJob({ at: now, jobId: id, device: locals.device, sheets, size: o.size, paper: o.paper, color: o.color, expires, customerId: locals.customer?.id });
 	db.prune(now - 90 * 24 * 60 * 60 * 1000);
 	await dropDraft(params.id);
 	// The PIN goes to the browser once and, for files from the bot, to the sender's Telegram chat. It is never stored or logged.

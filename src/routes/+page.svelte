@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from '$lib/Icon.svelte';
+	import CodeScreen from '$lib/portal/CodeScreen.svelte';
 	import FileScreen from '$lib/portal/FileScreen.svelte';
 	import OptionsScreen from '$lib/portal/OptionsScreen.svelte';
 	import PinScreen from '$lib/portal/PinScreen.svelte';
@@ -17,6 +18,7 @@
 			history.replaceState(null, '', location.pathname);
 			p.openClaim(claim);
 		}
+		p.loadCustomer();
 		p.loadPrinter();
 		const t = setInterval(() => p.loadPrinter(), 60_000);
 		return () => clearInterval(t);
@@ -38,7 +40,11 @@
 	<TopBar portal={p} />
 
 	<main class="screen-{p.screen}">
-		{#if p.screen === 'start'}
+		{#if p.customer === undefined}
+			<!-- Loading the customer. -->
+		{:else if p.customer === null}
+			<CodeScreen portal={p} />
+		{:else if p.screen === 'start'}
 			<StartScreen portal={p} />
 		{:else if p.screen === 'file'}
 			<FileScreen portal={p} />
@@ -50,7 +56,8 @@
 			<PinScreen portal={p} />
 		{/if}
 
-		{#if p.error}<p class="note bad toast" role="alert"><Icon name="alert" size={18} />{p.error}</p>{/if}
+		<!-- The code screen shows its own error under the field. -->
+		{#if p.error && p.customer !== null}<p class="note bad toast" role="alert"><Icon name="alert" size={18} />{p.error}</p>{/if}
 	</main>
 </div>
 

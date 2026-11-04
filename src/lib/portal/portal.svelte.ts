@@ -16,9 +16,15 @@ export type Pick = { sheets: { name: string; range: string }[]; fit: boolean };
 type Book = { list: { name: string; range: string | null }[]; pick: Pick };
 /** What the server returns for an uploaded or claimed file. */
 type Opened = { draft: string; kind: Kind; items: number; sheets?: Book; name?: string };
+/** `code` is false when the person was signed in by their network and has no code to drop. */
+type Customer = { name: string; code: boolean };
 
 /** Everything the print page knows, shared by its screens. */
 export class Portal {
+	/** Undefined while loading. Nothing else is shown until a customer is known. */
+	customer = $state<Customer | null | undefined>(undefined);
+	/** A Telegram file link opened before the code was entered. */
+	private pendingClaim: string | null = null;
 	screen = $state<Screen>('start');
 	kind = $state<Kind>('doc');
 	opts = $state<PrintOptions>({ ...PRESETS.doc });
@@ -54,10 +60,41 @@ export class Portal {
 		try {
 			await fn();
 		} catch (e) {
+			// The customer was switched off or its dates ran out while the page was open.
+			if (e instanceof ApiError && e.status === 401) this.customer = null;
 			this.error = message(e);
 		} finally {
 			this[flag] = false;
 		}
+	}
+
+	async loadCustomer() {
+		try {
+			this.customer = (await api<{ customer: Customer | null }>('/api/customer', { method: 'GET' })).customer;
+		} catch {
+			this.customer = null;
+		}
+		this.openPendingClaim();
+	}
+
+	enterCode(code: string) {
+		return this.run('busy', async () => {
+			this.customer = (await api<{ customer: Customer }>('/api/customer', { json: { code } })).customer;
+			this.openPendingClaim();
+		});
+	}
+
+	async signOut() {
+		await api('/api/customer', { method: 'DELETE' }).catch(() => {});
+		this.restart();
+		await this.loadCustomer();
+	}
+
+	private openPendingClaim() {
+		const claim = this.pendingClaim;
+		if (!claim || !this.customer) return;
+		this.pendingClaim = null;
+		void this.openClaim(claim);
 	}
 
 	async loadPrinter() {
@@ -98,6 +135,10 @@ export class Portal {
 
 	/** A file sent to the Telegram bot: its link carries a one-time token. */
 	openClaim(claim: string) {
+		if (!this.customer) {
+			this.pendingClaim = claim;
+			return;
+		}
 		return this.run('busy', async () => this.open(await api<Opened>(`/api/claim/${encodeURIComponent(claim)}`), true));
 	}
 

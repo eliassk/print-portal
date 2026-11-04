@@ -2,6 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { config } from './config.ts';
+import type { Customer } from './customers.ts';
 
 export interface Settings {
 	colorAllowed: boolean;
@@ -17,12 +18,19 @@ export interface JobRow {
 	paper: string;
 	color: string;
 	expires: number;
+	/** Name of the customer who printed, null when deleted since. */
+	customer?: string | null;
 }
+
+type CustomerRow = { id: number; name: string; code: string; enabled: number; active_from: string | null; active_until: string | null; networks: string };
+const toCustomer = (r: CustomerRow): Customer => ({
+	id: r.id, name: r.name, code: r.code, enabled: !!r.enabled, activeFrom: r.active_from, activeUntil: r.active_until, networks: r.networks
+});
 
 const DEFAULTS: Settings = { colorAllowed: true, dailyPages: 50, maxPages: 50 };
 
 /**
- * Jobs, daily counters, settings and authorized Telegram chats. File names and PINs are never stored.
+ * Jobs, daily counters, settings, customers and authorized Telegram chats. File names and PINs are never stored.
  * Pass ':memory:' in tests.
  */
 export function openDb(dir: string | ':memory:') {
@@ -40,7 +48,15 @@ export function openDb(dir: string | ':memory:') {
 		CREATE INDEX IF NOT EXISTS jobs_device_at ON jobs (device, at);
 		CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 		CREATE TABLE IF NOT EXISTS telegram_chats (chat_id INTEGER PRIMARY KEY, authorized_at INTEGER NOT NULL);
+		CREATE TABLE IF NOT EXISTS customers (
+			id INTEGER PRIMARY KEY, name TEXT NOT NULL, code TEXT NOT NULL UNIQUE, enabled INTEGER NOT NULL,
+			active_from TEXT, active_until TEXT, networks TEXT NOT NULL DEFAULT ''
+		);
 	`);
+	// Databases from before customers existed get the new columns.
+	const has = (table: string, col: string) => (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some((c) => c.name === col);
+	if (!has('jobs', 'customer_id')) db.exec('ALTER TABLE jobs ADD COLUMN customer_id INTEGER');
+	if (!has('telegram_chats', 'customer_id')) db.exec('ALTER TABLE telegram_chats ADD COLUMN customer_id INTEGER');
 
 	return {
 		settings(): Settings {
@@ -53,9 +69,9 @@ export function openDb(dir: string | ':memory:') {
 			const put = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
 			for (const [k, v] of Object.entries(s)) put.run(k, JSON.stringify(v));
 		},
-		addJob(j: JobRow & { device: string }) {
-			db.prepare('INSERT INTO jobs (at, job_id, device, sheets, size, paper, color, expires) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
-				j.at, j.jobId, j.device, j.sheets, j.size, j.paper, j.color, j.expires
+		addJob(j: JobRow & { device: string; customerId?: number }) {
+			db.prepare('INSERT INTO jobs (at, job_id, device, sheets, size, paper, color, expires, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+				j.at, j.jobId, j.device, j.sheets, j.size, j.paper, j.color, j.expires, j.customerId ?? null
 			);
 		},
 		/** Sheets this device printed since `since`. */
@@ -74,21 +90,25 @@ export function openDb(dir: string | ':memory:') {
 		},
 		recent(limit = 30): JobRow[] {
 			return (
-				db.prepare('SELECT at, job_id, sheets, size, paper, color, expires FROM jobs ORDER BY at DESC LIMIT ?').all(limit) as {
-					at: number; job_id: string; sheets: number; size: string; paper: string; color: string; expires: number;
+				db.prepare(`SELECT j.at, j.job_id, j.sheets, j.size, j.paper, j.color, j.expires, c.name AS customer
+					FROM jobs j LEFT JOIN customers c ON c.id = j.customer_id ORDER BY j.at DESC LIMIT ?`).all(limit) as {
+					at: number; job_id: string; sheets: number; size: string; paper: string; color: string; expires: number; customer: string | null;
 				}[]
-			).map((r) => ({ at: r.at, jobId: r.job_id, sheets: r.sheets, size: r.size, paper: r.paper, color: r.color, expires: r.expires }));
+			).map((r) => ({ at: r.at, jobId: r.job_id, sheets: r.sheets, size: r.size, paper: r.paper, color: r.color, expires: r.expires, customer: r.customer }));
 		},
 		totals(since: number): { jobs: number; sheets: number } {
 			const r = db.prepare('SELECT COUNT(*) AS jobs, COALESCE(SUM(sheets), 0) AS sheets FROM jobs WHERE at >= ?').get(since) as { jobs: number; sheets: number };
 			return { jobs: Number(r.jobs), sheets: Number(r.sheets) };
 		},
-		/** Lets this Telegram chat send files. Renews an earlier authorization. */
-		authorizeChat(chat: number, now: number) {
-			db.prepare('INSERT INTO telegram_chats (chat_id, authorized_at) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET authorized_at = excluded.authorized_at').run(chat, now);
+		/** Lets this Telegram chat send files for a customer. Renews an earlier authorization. */
+		authorizeChat(chat: number, customer: number, now: number) {
+			db.prepare(`INSERT INTO telegram_chats (chat_id, authorized_at, customer_id) VALUES (?, ?, ?)
+				ON CONFLICT(chat_id) DO UPDATE SET authorized_at = excluded.authorized_at, customer_id = excluded.customer_id`).run(chat, now, customer);
 		},
-		chatAuthorizedSince(chat: number, since: number): boolean {
-			return !!db.prepare('SELECT 1 FROM telegram_chats WHERE chat_id = ? AND authorized_at >= ?').get(chat, since);
+		/** The customer this chat was connected for, when authorized since `since`. Chats from before customers have none. */
+		chatCustomer(chat: number, since: number): number | null {
+			const r = db.prepare('SELECT customer_id FROM telegram_chats WHERE chat_id = ? AND authorized_at >= ?').get(chat, since) as { customer_id: number | null } | undefined;
+			return r?.customer_id ?? null;
 		},
 		/** Restarts the clock for a chat that is still connected. A disconnected chat stays out. */
 		renewChat(chat: number, now: number) {
@@ -96,6 +116,35 @@ export function openDb(dir: string | ':memory:') {
 		},
 		forgetChat(chat: number) {
 			db.prepare('DELETE FROM telegram_chats WHERE chat_id = ?').run(chat);
+		},
+		customers(): Customer[] {
+			return (db.prepare('SELECT * FROM customers ORDER BY name COLLATE NOCASE').all() as CustomerRow[]).map(toCustomer);
+		},
+		customer(id: number): Customer | null {
+			const r = db.prepare('SELECT * FROM customers WHERE id = ?').get(id) as CustomerRow | undefined;
+			return r ? toCustomer(r) : null;
+		},
+		customerByCode(code: string): Customer | null {
+			const r = db.prepare('SELECT * FROM customers WHERE code = ?').get(code) as CustomerRow | undefined;
+			return r ? toCustomer(r) : null;
+		},
+		/** Throws on a code that is already taken. */
+		addCustomer(c: Omit<Customer, 'id'>): number {
+			const r = db.prepare('INSERT INTO customers (name, code, enabled, active_from, active_until, networks) VALUES (?, ?, ?, ?, ?, ?)').run(
+				c.name, c.code, c.enabled ? 1 : 0, c.activeFrom, c.activeUntil, c.networks
+			);
+			return Number(r.lastInsertRowid);
+		},
+		/** Throws on a code that is already taken. */
+		updateCustomer(c: Customer) {
+			db.prepare('UPDATE customers SET name = ?, code = ?, enabled = ?, active_from = ?, active_until = ?, networks = ? WHERE id = ?').run(
+				c.name, c.code, c.enabled ? 1 : 0, c.activeFrom, c.activeUntil, c.networks, c.id
+			);
+		},
+		/** Also disconnects the customer's Telegram chats. Past jobs stay, without a name. */
+		deleteCustomer(id: number) {
+			db.prepare('DELETE FROM telegram_chats WHERE customer_id = ?').run(id);
+			db.prepare('DELETE FROM customers WHERE id = ?').run(id);
 		},
 		/** Drops job rows older than `before`, so the table stays small. */
 		prune(before: number) {

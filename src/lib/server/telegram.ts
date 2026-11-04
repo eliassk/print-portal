@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import { dateLocale, ui } from '$lib/i18n';
+import { isActive, today } from './customers.ts';
 import { getDb } from './db.ts';
 import { config } from './config.ts';
 import { intake } from './intake.ts';
@@ -20,33 +21,39 @@ export const AUTH_DAYS = 90;
 const AUTH_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
 
 // Tokens handed out on the portal, waiting for "/start <token>" in the bot chat.
-const links = new Map<string, number>();
+const links = new Map<string, { exp: number; customer: number }>();
 let botName = '';
 
 /** Whether the portal can offer the connect button. */
 export const botReady = () => !!botName;
 
 /**
- * A one-time t.me link that authorizes the chat it is opened in.
- * Only the portal hands these out, so only people on the building network can get one.
+ * A one-time t.me link that authorizes the chat it is opened in for this customer.
+ * Only the portal hands these out, so only people with an active customer code can get one.
  */
-export function connectLink(now = Date.now()): string | null {
+export function connectLink(customer: number, now = Date.now()): string | null {
 	if (!botName) return null;
-	for (const [t, exp] of links) if (exp < now) links.delete(t);
+	for (const [t, l] of links) if (l.exp < now) links.delete(t);
 	if (links.size >= MAX_LINKS) return null;
 	const token = randomBytes(18).toString('base64url');
-	links.set(token, now + LINK_TTL_MS);
+	links.set(token, { exp: now + LINK_TTL_MS, customer });
 	return `https://t.me/${botName}?start=${token}`;
 }
 
-/** Uses up a connect token. True when it was valid. */
-export function useLink(token: string, now = Date.now()): boolean {
-	const exp = links.get(token);
+/** Uses up a connect token. Returns its customer when it was valid. */
+export function useLink(token: string, now = Date.now()): number | null {
+	const l = links.get(token);
 	links.delete(token);
-	return exp !== undefined && exp >= now;
+	return l && l.exp >= now ? l.customer : null;
 }
 
-export const isAuthorized = (chat: number, now = Date.now()) => getDb().chatAuthorizedSince(chat, now - AUTH_MS);
+/** A chat may send files while it is connected and its customer is active. */
+export function isAuthorized(chat: number, now = Date.now()): boolean {
+	const db = getDb();
+	const id = db.chatCustomer(chat, now - AUTH_MS);
+	const c = id === null ? null : db.customer(id);
+	return !!c && isActive(c, today(config.timeZone, now));
+}
 
 type TgFile = { file_id: string; file_name?: string; file_size?: number; mime_type?: string };
 type Message = { chat: { id: number }; text?: string; document?: TgFile; photo?: TgFile[] };
@@ -91,8 +98,9 @@ async function handle(token: string, m: Message) {
 	const chat = m.chat.id;
 	const start = m.text?.match(/^\/start(?:@\w+)?\s+([\w-]{10,64})$/);
 	if (start) {
-		if (!useLink(start[1])) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
-		getDb().authorizeChat(chat, Date.now());
+		const customer = useLink(start[1]);
+		if (customer === null) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
+		getDb().authorizeChat(chat, customer, Date.now());
 		return reply(token, chat, ui.bot.connected(AUTH_DAYS, BOT_DRAFT_TTL_MIN));
 	}
 	if (/^\/stop\b/.test(m.text ?? '')) {
