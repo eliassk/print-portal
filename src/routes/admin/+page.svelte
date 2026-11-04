@@ -1,14 +1,44 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import Icon from '$lib/Icon.svelte';
 	import { dateLocale, ui } from '$lib/i18n';
 	import TrayList from '$lib/TrayList.svelte';
 	import { TONER_LOW } from '$lib/status';
 	let { data, form } = $props();
 
+	const TONER_ORDER = ['black', 'cyan', 'magenta', 'yellow'];
 	const time = (t: number) => new Date(t).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
+	const day = (d: string) => new Date(`${d}T12:00`).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' });
+
+	function period(from: string | null, until: string | null) {
+		const p = ui.admin.period;
+		if (from && until) return p.range(day(from), day(until));
+		if (from) return p.from(day(from));
+		if (until) return p.until(day(until));
+		return p.always;
+	}
+
+	type C = { id?: number; name: string; code: string; enabled: boolean; activeFrom: string | null; activeUntil: string | null; networks: string };
+	const blank: C = { name: '', code: '', enabled: true, activeFrom: null, activeUntil: null, networks: '' };
+	let adding = $state(false);
 </script>
 
 <svelte:head><title>{ui.admin.title} · {ui.appName}</title></svelte:head>
+
+{#snippet fields(c: C)}
+	<div class="fields">
+		<label class="f name"><span>{ui.admin.customerCols.name}</span><input name="name" value={c.name} required maxlength="100" /></label>
+		<label class="f"><span>{ui.admin.customerCols.code}</span><input name="code" value={c.code} class="mono" placeholder={ui.admin.codeAuto} maxlength="32" /></label>
+		<label class="f"><span>{ui.admin.customerCols.from}</span><input name="activeFrom" type="date" value={c.activeFrom ?? ''} /></label>
+		<label class="f"><span>{ui.admin.customerCols.until}</span><input name="activeUntil" type="date" value={c.activeUntil ?? ''} /></label>
+		<label class="f wide">
+			<span>{ui.admin.customerCols.networks}</span>
+			<textarea name="networks" rows="2" placeholder="10.20.0.0/16">{c.networks}</textarea>
+			<small>{ui.admin.networksHint}</small>
+		</label>
+		<label class="toggle wide"><input type="checkbox" class="switch" name="enabled" checked={c.enabled} /><span>{ui.admin.enabledLabel}</span></label>
+	</div>
+{/snippet}
 
 {#if data.state !== 'in'}
 	<div class="gate">
@@ -30,51 +60,160 @@
 		</div>
 	</div>
 {:else}
-<main>
-	<header>
-		<h1>{ui.admin.title}</h1>
-		<form method="POST" action="?/logout"><button class="link">{ui.admin.logout}</button></form>
+	{@const toners = [...data.status.toner].sort((a, b) => TONER_ORDER.indexOf(a.key) - TONER_ORDER.indexOf(b.key))}
+	{@const waiting = data.recent.filter((j) => j.expires > data.now).length}
+	{@const activeCustomers = data.customers.filter((c) => c.state === 'active').length}
+	<header class="top">
+		<div class="top-in">
+			<span class="brand"><span class="logo sm"><Icon name="printer" size={18} /></span><span class="bt">{ui.admin.title}</span></span>
+			<nav>
+				<a href="/">{ui.admin.portal}</a>
+				<a href="/karta">{ui.admin.cardShort}</a>
+				<form method="POST" action="?/logout"><button class="link">{ui.admin.logout}</button></form>
+			</nav>
+		</div>
 	</header>
 
-		<section class="card">
-			<h2>{ui.admin.printer}</h2>
+	<main>
+		<section class="stats" aria-label={ui.admin.today}>
+			<div class="stat"><span>{ui.admin.stats.prints}</span><b>{data.today.jobs}</b></div>
+			<div class="stat"><span>{ui.admin.stats.sheets}</span><b>{data.today.sheets}</b></div>
+			<div class="stat" class:hot={waiting > 0}><span>{ui.admin.stats.waiting}</span><b>{waiting}</b></div>
+			<div class="stat"><span>{ui.admin.stats.customers}</span><b>{activeCustomers}<small>/ {data.customers.length}</small></b></div>
+		</section>
+
+		<section class="card printer">
+			<div class="ch">
+				<h2>{ui.admin.printer}</h2>
+				<span class="chip" class:off={!data.status.online}><i></i>{data.status.online ? ui.printerOk : ui.printerOff}</span>
+			</div>
 			{#if data.status.online}
 				<TrayList trays={data.status.trays} />
-				<h3>{ui.admin.toner}</h3>
-				<div class="toner">
-					{#each data.status.toner as t (t.key)}
-						<div><b class:low={t.level <= TONER_LOW}>{t.level}%</b>{ui.toner[t.key]}</div>
-					{/each}
-				</div>
+				{#if toners.length}
+					<h3>{ui.admin.toner}</h3>
+					<div class="toners">
+						{#each toners as t (t.key)}
+							<div class="toner" class:low={t.level <= TONER_LOW}>
+								<span class="tname"><span class="dot {t.key}" aria-hidden="true"></span>{ui.toner[t.key]}</span>
+								<span class="tbar" aria-hidden="true"><span class={t.key} style="width: {t.level}%"></span></span>
+								<b>{t.level}%</b>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			{:else}
 				<p class="err">{ui.admin.offline}</p>
 			{/if}
 		</section>
 
-		<form method="POST" action="?/save" class="card">
-			<h2>{ui.admin.settings}</h2>
-			<label class="row"><span>{ui.admin.colorAllowed}</span><input type="checkbox" name="colorAllowed" checked={data.settings.colorAllowed} /></label>
-			<label class="row"><span>{ui.admin.dailyPages}</span><input type="number" name="dailyPages" min="1" max="1000" value={data.settings.dailyPages} /></label>
-			<label class="row"><span>{ui.admin.maxPages}</span><input type="number" name="maxPages" min="1" max="500" value={data.settings.maxPages} /></label>
-			<div class="row"><button class="btn">{ui.admin.save}</button>{#if form?.saved}<span class="ok">{ui.admin.saved}</span>{/if}</div>
+		<form method="POST" action="?/save" class="card settings" use:enhance={() => ({ update }) => update({ reset: false })}>
+			<div class="ch">
+				<h2>{ui.admin.settings}</h2>
+				{#if form?.saved}<span class="ok">{ui.admin.saved}</span>{/if}
+			</div>
+			<label class="set">
+				<span><b>{ui.admin.colorAllowed}</b><small>{ui.admin.colorHint}</small></span>
+				<input type="checkbox" class="switch" name="colorAllowed" checked={data.settings.colorAllowed} />
+			</label>
+			<label class="set">
+				<span><b>{ui.admin.dailyPages}</b><small>{ui.admin.dailyHint}</small></span>
+				<input type="number" name="dailyPages" min="1" max="1000" value={data.settings.dailyPages} />
+			</label>
+			<label class="set">
+				<span><b>{ui.admin.maxPages}</b><small>{ui.admin.maxHint}</small></span>
+				<input type="number" name="maxPages" min="1" max="500" value={data.settings.maxPages} />
+			</label>
+			<button class="btn small">{ui.admin.save}</button>
 		</form>
 
-		<section class="card">
-			<h2>{ui.admin.recent}</h2>
-			<p class="muted">{ui.admin.today}: {ui.admin.todayTotals(data.today.jobs, data.today.sheets)}</p>
+		<section class="card customers">
+			<div class="ch">
+				<h2>{ui.admin.customers} <span class="count">{data.customers.length}</span></h2>
+				{#if !adding}<button class="btn small" onclick={() => (adding = true)}><Icon name="plus" size={16} />{ui.admin.addCustomer}</button>{/if}
+			</div>
+			<p class="muted">{ui.admin.customersHint}</p>
+			{#if form?.customerError}<p class="err">{form.customerError}</p>{/if}
+
+			{#if adding}
+				<form method="POST" action="?/addCustomer" class="editor new" use:enhance={() => async ({ result, update }) => {
+					await update();
+					if (result.type === 'success') adding = false;
+				}}>
+					<h3>{ui.admin.newCustomer}</h3>
+					{@render fields(blank)}
+					<div class="acts">
+						<button class="btn small">{ui.admin.addCustomer}</button>
+						<button type="button" class="link" onclick={() => (adding = false)}>{ui.admin.cancel}</button>
+					</div>
+				</form>
+			{/if}
+
+			{#if data.customers.length === 0 && !adding}
+				<p class="note">{ui.admin.noCustomers}</p>
+			{:else}
+				<ul class="clist">
+					{#each data.customers as c (c.id)}
+						<li class="cust state-{c.state}">
+							<details>
+								<summary>
+									<span class="cname">
+										<b>{c.name}</b>
+										<span class="pill {c.state}">{ui.admin.states[c.state]}</span>
+									</span>
+									<span class="code">{c.code}</span>
+									<span class="cmeta">
+										<span>{period(c.activeFrom, c.activeUntil)}</span>
+										{#if c.networks}
+											{#each c.networks.split('\n') as n (n)}<span class="net">{n}</span>{/each}
+										{:else}
+											<span class="net none">{ui.admin.networksNone}</span>
+										{/if}
+									</span>
+									<span class="edit-hint">{ui.admin.edit}<Icon name="right" size={16} /></span>
+								</summary>
+								<form method="POST" action="?/updateCustomer" class="editor" use:enhance={() => ({ update }) => update({ reset: false })}>
+									<input type="hidden" name="id" value={c.id} />
+									{@render fields(c)}
+									<div class="acts">
+										<button class="btn small">{ui.admin.save}</button>
+										<button
+											class="link del"
+											formaction="?/deleteCustomer"
+											formnovalidate
+											onclick={(e) => {
+												if (!confirm(ui.admin.confirmDelete(c.name))) e.preventDefault();
+											}}>{ui.admin.deleteCustomer}</button
+										>
+									</div>
+								</form>
+							</details>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</section>
+
+		<section class="card recent">
+			<div class="ch">
+				<h2>{ui.admin.recent}</h2>
+				<span class="muted">{ui.admin.todayTotals(data.today.jobs, data.today.sheets)}</span>
+			</div>
 			{#if data.recent.length === 0}
 				<p class="muted">{ui.admin.noJobs}</p>
 			{:else}
 				<div class="tw">
 					<table>
-						<thead><tr><th>{ui.admin.cols.time}</th><th>{ui.admin.cols.id}</th><th>{ui.admin.cols.sheets}</th><th>{ui.admin.cols.paper}</th><th>{ui.admin.cols.state}</th></tr></thead>
+						<thead>
+							<tr><th>{ui.admin.cols.time}</th><th>{ui.admin.cols.id}</th><th>{ui.admin.customer}</th><th>{ui.admin.cols.sheets}</th><th>{ui.admin.cols.paper}</th><th>{ui.admin.cols.state}</th></tr>
+						</thead>
 						<tbody>
 							{#each data.recent as j (j.at + j.jobId)}
 								<tr>
 									<td>{time(j.at)}</td>
-									<td>{j.jobId}</td>
+									<td class="mono">{j.jobId}</td>
+									<td>{j.customer ?? '—'}</td>
 									<td>{j.sheets}</td>
-									<td>{j.size} · {ui.papers[j.paper as keyof typeof ui.papers]?.name ?? j.paper} · {ui.colorOptions[j.color as 'mono' | 'color']}</td>
+									<td class="paper">{j.size} · {ui.papers[j.paper as keyof typeof ui.papers]?.name ?? j.paper} · {ui.colorOptions[j.color as 'mono' | 'color']}</td>
 									<td><span class="pill" class:wait={j.expires > data.now}>{j.expires > data.now ? ui.admin.waiting : ui.admin.gone}</span></td>
 								</tr>
 							{/each}
@@ -83,11 +222,11 @@
 				</div>
 			{/if}
 		</section>
-		<p><a href="/karta">{ui.admin.card}</a></p>
-</main>
+	</main>
 {/if}
 
 <style>
+	/* Login */
 	.gate {
 		min-height: 100dvh;
 		display: grid;
@@ -109,6 +248,7 @@
 	}
 	.gate-card h1 {
 		font-size: 1.4rem;
+		margin: 0;
 	}
 	.gate-card .muted {
 		margin: -6px 0 6px;
@@ -121,6 +261,11 @@
 		place-items: center;
 		background: var(--accent-soft);
 		color: var(--accent);
+	}
+	.logo.sm {
+		width: 32px;
+		height: 32px;
+		border-radius: 10px;
 	}
 	.login {
 		width: 100%;
@@ -137,10 +282,6 @@
 		height: 46px;
 		font-size: 16px;
 	}
-	.login input:focus {
-		border-color: var(--accent);
-		outline: 3px solid var(--accent-soft);
-	}
 	.login .btn {
 		margin-top: 6px;
 		height: 46px;
@@ -153,98 +294,521 @@
 		font-size: 14px;
 		text-decoration: none;
 	}
-	main {
-		max-width: 1040px;
+
+	/* Top bar */
+	.top {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		background: color-mix(in srgb, var(--surface) 88%, transparent);
+		backdrop-filter: saturate(1.4) blur(12px);
+		border-bottom: 1px solid var(--line);
+	}
+	.top-in {
+		max-width: 1120px;
 		margin: 0 auto;
-		padding: 32px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+		min-height: 60px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-weight: 650;
+		letter-spacing: -0.01em;
+	}
+	nav {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 14px;
+	}
+	@media (max-width: 520px) {
+		.bt {
+			display: none;
+		}
+	}
+	nav a {
+		white-space: nowrap;
+		padding: 6px 10px;
+		border-radius: 8px;
+		color: var(--muted);
+		text-decoration: none;
+		font-weight: 550;
+	}
+	nav a:hover {
+		background: var(--sunk);
+		color: var(--fg);
+	}
+
+	/* Layout */
+	main {
+		max-width: 1120px;
+		margin: 0 auto;
+		padding: 24px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
 		display: grid;
 		gap: 16px;
-	}
-	header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-	h1 {
-		font-size: 1.8rem;
-		letter-spacing: -0.02em;
-		margin: 0;
+		grid-template-columns: minmax(0, 1fr);
 	}
 	@media (min-width: 900px) {
 		main {
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
 			align-items: start;
 		}
-		header,
-		main > section:nth-of-type(2),
-		main > p {
+		.stats,
+		.customers,
+		.recent {
 			grid-column: 1 / -1;
 		}
 	}
+	.card {
+		padding: 20px;
+		gap: 14px;
+	}
+	.ch {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
 	h2 {
 		font-size: 1.1rem;
-		margin: 0 0 12px;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
 	h3 {
-		font-size: 0.95rem;
-		margin: 16px 0 8px;
+		font: 600 0.72rem var(--mono);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+		margin: 4px 0 0;
 	}
-	/* Shared card, but with plain block flow and more room. */
-	.card {
-		display: block;
-		padding: 20px;
+	.count {
+		font: 600 12px var(--mono);
+		padding: 2px 8px;
+		border-radius: 99px;
+		background: var(--sunk);
+		color: var(--muted);
 	}
-	.login {
+	.muted {
+		color: var(--muted);
+		margin: 0;
+		font-size: 14px;
+	}
+	.btn.small {
+		width: auto;
+		justify-self: start;
+		border-radius: 12px;
+		padding: 10px 16px;
+		font-size: 14.5px;
+		box-shadow: none;
+	}
+
+	/* Stats */
+	.stats {
 		display: grid;
-		gap: 10px;
-		max-width: 360px;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 12px;
 	}
-	input[type='password'],
-	input[type='number'] {
+	@media (max-width: 700px) {
+		.stats {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	.stat {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		box-shadow: var(--shadow);
+		padding: 14px 16px;
+		display: grid;
+		gap: 4px;
+	}
+	.stat span {
+		font-size: 13px;
+		color: var(--muted);
+	}
+	.stat b {
+		display: flex;
+		align-items: baseline;
+		font-size: 1.75rem;
+		font-weight: 650;
+		letter-spacing: -0.02em;
+		font-variant-numeric: tabular-nums;
+	}
+	.stat small {
+		font-size: 0.95rem;
+		font-weight: 500;
+		color: var(--muted);
+		margin-left: 4px;
+	}
+	.stat.hot b {
+		color: var(--warn);
+	}
+
+	/* Printer */
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 13px;
+		font-weight: 550;
+		padding: 4px 10px;
+		border-radius: 99px;
+		background: var(--ok-soft);
+		color: var(--ok);
+	}
+	.chip i {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+	.chip.off {
+		background: var(--bad-soft);
+		color: var(--bad);
+	}
+	.toners {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px 24px;
+	}
+	@media (max-width: 560px) {
+		.toners {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.toner {
+		display: grid;
+		grid-template-columns: 84px minmax(0, 1fr) 40px;
+		align-items: center;
+		gap: 10px;
+		font-size: 14px;
+	}
+	.toner b {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+	.toner.low b {
+		color: var(--bad);
+	}
+	.tname {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--muted);
+	}
+	.dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+	}
+	.tbar {
+		height: 8px;
+		border-radius: 4px;
+		background: var(--line);
+		overflow: hidden;
+	}
+	.tbar span {
+		display: block;
+		height: 100%;
+		border-radius: 4px;
+	}
+	.black {
+		background: #8a93a3;
+	}
+	.cyan {
+		background: #10a5d8;
+	}
+	.magenta {
+		background: #d6338a;
+	}
+	.yellow {
+		background: #e8c21a;
+	}
+
+	/* Settings */
+	.set {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
+		padding: 12px 0;
+		border-bottom: 1px solid var(--line);
+		cursor: pointer;
+	}
+	.set span {
+		display: grid;
+		gap: 2px;
+	}
+	.set b {
+		font-weight: 550;
+		font-size: 15px;
+	}
+	.set small {
+		color: var(--muted);
+		font-size: 13px;
+	}
+	.settings .btn {
+		margin-top: 4px;
+	}
+	input[type='number'],
+	input[type='date'],
+	input:not([type]),
+	textarea {
 		border: 1px solid var(--line-strong);
 		border-radius: 10px;
 		padding: 8px 10px;
 		background: var(--surface);
+		color: var(--fg);
+		font: inherit;
+		font-size: 15px;
 	}
 	input[type='number'] {
-		width: 6em;
+		width: 5.5em;
+		text-align: right;
+		font-variant-numeric: tabular-nums;
 	}
-	.row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 12px;
-		padding: 8px 0;
-		border-bottom: 1px solid var(--line);
+	input:focus,
+	textarea:focus {
+		outline: none;
+		border-color: var(--accent);
+		box-shadow: 0 0 0 3px var(--accent-soft);
 	}
-	.row:last-child {
-		border: 0;
+	.switch {
+		appearance: none;
+		flex: none;
+		width: 44px;
+		height: 26px;
+		border-radius: 99px;
+		background: var(--line-strong);
+		position: relative;
+		cursor: pointer;
+		transition: background 0.15s;
+		margin: 0;
 	}
-	/* Compact buttons; the shared ones are full width. */
-	.btn {
-		width: auto;
+	.switch::after {
+		content: '';
+		position: absolute;
+		top: 3px;
+		left: 3px;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: #fff;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+		transition: transform 0.15s;
+	}
+	.switch:checked {
+		background: var(--accent);
+	}
+	.switch:checked::after {
+		transform: translateX(18px);
+	}
+	.switch:focus-visible {
+		outline: 3px solid var(--accent-soft);
+	}
+
+	/* Customers */
+	.clist {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border: 1px solid var(--line);
 		border-radius: 12px;
-		padding: 10px 16px;
-		box-shadow: none;
+		overflow: hidden;
 	}
-	.toner {
+	.cust + .cust {
+		border-top: 1px solid var(--line);
+	}
+	summary {
+		list-style: none;
+		display: grid;
+		grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1.6fr) auto;
+		align-items: center;
+		gap: 16px;
+		padding: 14px 16px;
+		cursor: pointer;
+	}
+	summary::-webkit-details-marker {
+		display: none;
+	}
+	summary:hover {
+		background: var(--sunk);
+	}
+	details[open] summary {
+		background: var(--sunk);
+	}
+	.cname {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+	.code {
+		font: 600 15px var(--mono);
+		letter-spacing: 0.1em;
+		padding: 4px 10px;
+		border-radius: 8px;
+		background: var(--sunk);
+		border: 1px solid var(--line);
+		user-select: all;
+	}
+	.cmeta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px 10px;
+		color: var(--muted);
+		font-size: 13.5px;
+	}
+	.net {
+		font: 12.5px var(--mono);
+		padding: 2px 8px;
+		border-radius: 6px;
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+	.net.none {
+		font-family: var(--sans);
+		background: var(--sunk);
+		color: var(--muted);
+	}
+	.edit-hint {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+		color: var(--accent);
+		font-size: 14px;
+		font-weight: 550;
+	}
+	details[open] .edit-hint :global(svg) {
+		transform: rotate(90deg);
+	}
+	.state-off .cname b,
+	.state-ended .cname b {
+		color: var(--muted);
+	}
+	@media (max-width: 760px) {
+		summary {
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 8px 12px;
+		}
+		.cmeta {
+			grid-column: 1 / -1;
+		}
+		.edit-hint {
+			display: none;
+		}
+	}
+	.editor {
+		display: grid;
+		gap: 14px;
+		padding: 16px;
+		border-top: 1px solid var(--line);
+	}
+	.editor.new {
+		border: 1px solid var(--accent);
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface));
+	}
+	.fields {
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: 8px;
-		text-align: center;
+		gap: 12px;
+	}
+	@media (max-width: 760px) {
+		.fields {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	.f {
+		display: grid;
+		gap: 6px;
+		align-content: start;
+	}
+	.f > span {
+		font-size: 12.5px;
+		font-weight: 600;
 		color: var(--muted);
+	}
+	.f input,
+	.f textarea {
+		width: 100%;
+		min-width: 0;
+	}
+	.f small {
+		color: var(--muted);
+		font-size: 12.5px;
+	}
+	.wide {
+		grid-column: 1 / -1;
+	}
+	textarea {
+		resize: vertical;
+		font-family: var(--mono);
 		font-size: 14px;
 	}
-	.toner b {
-		display: block;
-		color: var(--fg);
-		font: 600 1.1rem var(--mono);
+	.mono {
+		font-family: var(--mono);
+		text-transform: uppercase;
 	}
-	.toner b.low {
+	.mono::placeholder {
+		font-family: var(--sans);
+		text-transform: none;
+	}
+	.toggle {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 15px;
+		cursor: pointer;
+	}
+	.acts {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+	.del {
+		color: var(--bad);
+		margin-left: auto;
+	}
+
+	/* Pills */
+	.pill {
+		font-size: 12px;
+		font-weight: 600;
+		padding: 2px 8px;
+		border-radius: 99px;
+		background: var(--sunk);
+		color: var(--muted);
+		white-space: nowrap;
+	}
+	.pill.active {
+		background: var(--ok-soft);
+		color: var(--ok);
+	}
+	.pill.upcoming,
+	.pill.wait {
+		background: var(--warn-soft);
+		color: var(--warn);
+	}
+	.pill.ended {
+		background: var(--bad-soft);
 		color: var(--bad);
 	}
+
+	/* Recent prints */
 	.tw {
 		overflow-x: auto;
+		margin: 0 -20px -20px;
 	}
 	table {
 		border-collapse: collapse;
@@ -254,41 +818,41 @@
 	th,
 	td {
 		text-align: left;
-		padding: 8px;
-		border-bottom: 1px solid var(--line);
+		padding: 10px 20px;
+		border-top: 1px solid var(--line);
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
 	}
 	th {
 		font: 600 0.7rem var(--mono);
 		text-transform: uppercase;
+		letter-spacing: 0.04em;
 		color: var(--muted);
-	}
-	.pill {
-		font-size: 12px;
-		font-weight: 600;
-		padding: 2px 8px;
-		border-radius: 99px;
 		background: var(--sunk);
+	}
+	tbody tr:hover {
+		background: var(--sunk);
+	}
+	td.paper {
 		color: var(--muted);
 	}
-	.pill.wait {
-		background: var(--warn-soft);
-		color: var(--warn);
+	td.mono {
+		text-transform: none;
 	}
-	.muted {
-		color: var(--muted);
-		margin: 0 0 8px;
-	}
+
 	.note {
 		background: var(--warn-soft);
 		color: var(--warn);
+		padding: 12px 14px;
+		border-radius: 12px;
+		margin: 0;
 	}
 	.ok {
 		color: var(--ok);
 		font-weight: 600;
+		font-size: 14px;
 	}
-	a {
-		color: var(--accent);
+	.err {
+		margin: 0;
 	}
 </style>

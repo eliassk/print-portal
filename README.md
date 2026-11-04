@@ -62,6 +62,7 @@ Built for and tested on a **Konica Minolta bizhub C224e**. Other bizhub models t
 - 📊 **Spreadsheets.** Choose which sheets to print and select the cell range on a grid of the sheet.
 - 🔒 **Secure Print.** Every job gets an ID and PIN and is held until it is released at the panel. The PIN is never stored.
 - 🧾 **Printer status** over IPP: trays, paper and toner levels, with warnings before a job would stall.
+- 🏢 **Customers.** Each company in the building gets a code with an optional active date range. Only active codes can print or connect Telegram. A customer can also list networks (e.g. an office VLAN) whose people print without a code.
 - 🛠️ **Admin panel** (optional): printer status, colour on or off, daily limits per phone, recent jobs.
 - 📱 **QR card** at `/karta`, an A5 page to print and hang next to the printer.
 - 💬 **Telegram bot** (optional): forward a file to the bot and get a one-time link that opens the portal with it loaded.

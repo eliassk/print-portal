@@ -10,6 +10,9 @@ services:
     environment:
       # SvelteKit checks form posts against this origin; it MUST match the address people open.
       ORIGIN: "https://${PORTAL_DOMAIN}"
+      # Caddy adds the client to X-Forwarded-For. Customer networks match on that address.
+      ADDRESS_HEADER: X-Forwarded-For
+      XFF_DEPTH: "1"
   caddy:
     build: ./caddy
     restart: unless-stopped

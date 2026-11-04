@@ -29,19 +29,19 @@ describe('telegram bot', () => {
 	});
 
 	it('refuses unknown or reused connect tokens', () => {
-		expect(useLink('not-a-real-token')).toBe(false);
+		expect(useLink('not-a-real-token')).toBeNull();
 	});
 
 	it('keeps chat authorizations until they expire or are dropped', () => {
 		const db = openDb(':memory:');
-		db.authorizeChat(5, 1000);
-		expect(db.chatAuthorizedSince(5, 500)).toBe(true);
-		expect(db.chatAuthorizedSince(5, 2000)).toBe(false);
-		expect(db.chatAuthorizedSince(6, 0)).toBe(false);
+		db.authorizeChat(5, 7, 1000);
+		expect(db.chatCustomer(5, 500)).toBe(7);
+		expect(db.chatCustomer(5, 2000)).toBeNull();
+		expect(db.chatCustomer(6, 0)).toBeNull();
 		db.renewChat(5, 3000);
-		expect(db.chatAuthorizedSince(5, 2000)).toBe(true);
+		expect(db.chatCustomer(5, 2000)).toBe(7);
 		db.forgetChat(5);
 		db.renewChat(5, 4000);
-		expect(db.chatAuthorizedSince(5, 0)).toBe(false);
+		expect(db.chatCustomer(5, 0)).toBeNull();
 	});
 });

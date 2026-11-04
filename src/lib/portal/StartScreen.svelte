@@ -28,6 +28,12 @@
 <div class="hero">
 	<h1>{ui.startQuestion}</h1>
 	<p>{ui.tagline}</p>
+	{#if p.customer}
+		<p class="who">
+			{ui.customer.printingFor(p.customer.name)}
+			{#if p.customer.code}· <button class="link" onclick={() => p.signOut()}>{ui.customer.signOut}</button>{/if}
+		</p>
+	{/if}
 </div>
 <div class="presets">
 	{#each ['doc', 'photo'] as const as k (k)}
@@ -76,6 +82,10 @@
 {/if}
 
 <style>
+	.hero .who {
+		margin-top: 8px;
+		font-size: 14px;
+	}
 	.presets {
 		display: grid;
 		gap: 12px;
