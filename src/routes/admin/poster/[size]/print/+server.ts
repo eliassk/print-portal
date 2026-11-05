@@ -10,7 +10,8 @@ import type { RequestHandler } from './$types';
 /** Loads the guide into the print portal, like a file sent to the bot, and returns the link that opens it. */
 export const POST: RequestHandler = async ({ params, cookies }) => {
 	const { size, ...o } = posterRequest(params.size, cookies);
-	const pdf = await posterPdf(size, o);
+	const pdf = await posterPdf(size, o).catch(() => undefined);
+	if (pdf === undefined) return refuse(500, ui.admin.posters.pdfFailed);
 	if (!pdf) return refuse(503, ui.admin.posters.noPdf);
 	const name = posterFileName(size);
 	const file = await intake([{ name, data: pdf }]);

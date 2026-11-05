@@ -240,6 +240,7 @@ export const pl = {
 			print: 'Drukuj',
 			pdf: 'PDF',
 			preparing: 'Przygotowuję…',
+			pdfFailed: 'Nie udało się przygotować PDF-a. Szczegóły są w logach serwera (docker compose logs print-portal).',
 			noPdf: 'Serwer nie ma Chromium, więc nie może przygotować PDF-a. Użyj podglądu i wydrukuj go z przeglądarki.',
 			preview: 'Podgląd'
 		},

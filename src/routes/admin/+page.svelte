@@ -38,13 +38,14 @@
 		}
 	}
 
-	let printing = $state('');
+	/** Which poster action is running, e.g. "pdf-a3". */
+	let busy = $state('');
 	let posterError = $state('');
 
 	/** Loads the poster into the print portal and opens it in a new tab. */
 	async function printPoster(size: string) {
 		posterError = '';
-		printing = size;
+		busy = `print-${size}`;
 		// Opened before the wait, so the browser does not treat it as a pop-up.
 		const tab = window.open('', '_blank');
 		try {
@@ -55,7 +56,26 @@
 			tab?.close();
 			posterError = message(e);
 		} finally {
-			printing = '';
+			busy = '';
+		}
+	}
+
+	/** Fetches the PDF first, so a failure shows a message instead of saving an error page. */
+	async function downloadPoster(size: string) {
+		posterError = '';
+		busy = `pdf-${size}`;
+		try {
+			const res = await fetch(`/admin/poster/${size}/pdf`);
+			if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? ui.errors.generic);
+			const a = document.createElement('a');
+			a.href = URL.createObjectURL(await res.blob());
+			a.download = `instrukcja-${size}.pdf`;
+			a.click();
+			setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+		} catch (e) {
+			posterError = message(e);
+		} finally {
+			busy = '';
 		}
 	}
 
@@ -234,8 +254,8 @@
 						<span class="paper" aria-hidden="true">{name}</span>
 						<span class="what"><b>{name}</b><small>{hint}</small></span>
 						<span class="go">
-							<button type="button" class="btn small" disabled={printing === size} onclick={() => printPoster(size)}><Icon name="printer" size={16} />{printing === size ? ui.admin.posters.preparing : ui.admin.posters.print}</button>
-							<a class="btn small sec" href="/admin/poster/{size}/pdf" download><Icon name="upload" size={16} />{ui.admin.posters.pdf}</a>
+							<button type="button" class="btn small" disabled={!!busy} onclick={() => printPoster(size)}><Icon name="printer" size={16} />{busy === `print-${size}` ? ui.admin.posters.preparing : ui.admin.posters.print}</button>
+							<button type="button" class="btn small sec" disabled={!!busy} onclick={() => downloadPoster(size)}><Icon name="upload" size={16} />{busy === `pdf-${size}` ? ui.admin.posters.preparing : ui.admin.posters.pdf}</button>
 							<a class="link" href="/admin/poster/{size}" target="_blank" rel="noopener">{ui.admin.posters.preview}</a>
 						</span>
 					</div>

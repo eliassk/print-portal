@@ -16,6 +16,11 @@ services:
   caddy:
     build: ./caddy
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
     depends_on: [print-portal]
     environment:
       PORTAL_DOMAIN: ${PORTAL_DOMAIN}
