@@ -5,12 +5,18 @@ import { newDeviceId } from '$lib/server/auth';
 import { config } from '$lib/server/config';
 import { resolveCustomer, today } from '$lib/server/customers';
 import { getDb } from '$lib/server/db';
+import { removeOrphans } from '$lib/server/jobs';
 import { startBot } from '$lib/server/telegram';
 
 /** Endpoints that work before a customer is known. */
 const OPEN_API = new Set(['/api/customer', '/api/printer']);
 
-export const init: ServerInit = () => startBot();
+export const init: ServerInit = async () => {
+	// Files of drafts from before a restart can no longer be opened or printed, so they go.
+	const n = await removeOrphans();
+	if (n) console.log(`Removed ${n} upload files left from before the restart`);
+	startBot();
+};
 
 /**
  * Gives each browser a random device id, so daily limits count per phone,

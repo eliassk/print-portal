@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { config } from './config.ts';
 import { compose, type Composed, type Source } from './compose.ts';
@@ -33,7 +33,7 @@ export interface Draft {
 	cache?: { key: string; result: Composed };
 }
 
-// Drafts live in memory and on disk for 30 minutes. A restart loses unsent drafts only.
+// Drafts live in memory and on disk for 30 minutes. A restart loses unsent drafts; removeOrphans() deletes their files.
 const drafts = new Map<string, Draft>();
 const DRAFT_TTL_MS = 30 * 60 * 1000;
 /** Files sent to the Telegram bot wait longer, since the person still has to reach the building Wi-Fi. */
@@ -123,6 +123,18 @@ export async function dropDraft(key: string) {
 	const d = drafts.get(key);
 	drafts.delete(key);
 	if (d) await Promise.all([...d.files, ...(d.sheets ? [d.sheets.file] : [])].map((f) => rm(f, { force: true })));
+}
+
+/**
+ * Deletes upload files no draft refers to. After a restart that is every file, since the drafts lived in memory.
+ * MUST run before the first request, so it never races a draft being written.
+ */
+export async function removeOrphans() {
+	const known = new Set([...drafts.values()].flatMap((d) => [...d.files, ...(d.sheets ? [d.sheets.file] : [])]));
+	const names = await readdir(dir()).catch(() => []);
+	const stale = names.map((n) => join(dir(), n)).filter((f) => !known.has(f));
+	await Promise.all(stale.map((f) => rm(f, { recursive: true, force: true })));
+	return stale.length;
 }
 
 async function sweep() {
