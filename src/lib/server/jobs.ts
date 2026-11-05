@@ -21,6 +21,8 @@ export interface Draft {
 	expires: number;
 	/** Original file name, shown on the page. */
 	name: string;
+	/** Paper size the portal preselects when it opens the draft, e.g. A3 for the A3 guide. */
+	size?: PrintOptions['size'];
 	/** Set while a draft from the Telegram bot waits for a browser to open its link. */
 	claim?: string;
 	/** Telegram chat that sent the file. It gets the ID and PIN once the job is printed. */
@@ -70,12 +72,13 @@ export async function saveDraft(
  * A draft no browser owns yet. The returned token MUST reach only the sender.
  * The first browser that opens it becomes the owner.
  */
-export async function saveClaimable(file: Intake, name: string, chat?: number): Promise<string> {
+export async function saveClaimable(file: Intake, name: string, chat?: number, size?: PrintOptions['size']): Promise<string> {
 	const key = await saveDraft(file, { device: '', name, ttlMs: BOT_DRAFT_TTL_MIN * 60 * 1000 });
 	const claim = randomBytes(18).toString('base64url');
 	const d = drafts.get(key)!;
 	d.claim = claim;
 	d.chat = chat;
+	d.size = size;
 	return claim;
 }
 

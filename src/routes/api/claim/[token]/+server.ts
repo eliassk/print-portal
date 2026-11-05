@@ -10,5 +10,5 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	if (!claimed) return refuse(404, ui.errors.claimGone);
 	const { key, draft } = claimed;
 	const sheets = draft.sheets && { list: draft.sheets.book.sheets, pick: draft.sheets.pick };
-	return json({ draft: key, kind: draft.kind, items: draft.items, sheets, name: draft.name });
+	return json({ draft: key, kind: draft.kind, items: draft.items, sheets, name: draft.name, size: draft.size });
 };

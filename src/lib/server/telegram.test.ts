@@ -28,6 +28,11 @@ describe('telegram bot', () => {
 		expect(getDraft(first!.key, 'device-b')).toBeNull();
 	});
 
+	it('keeps the paper size a draft should open with', async () => {
+		const claim = await saveClaimable({ kind: 'doc', data: [new Uint8Array([1])], items: 1 }, 'guide.pdf', undefined, 'A3');
+		expect(claimDraft(claim, 'device-c')?.draft.size).toBe('A3');
+	});
+
 	it('refuses unknown or reused connect tokens', () => {
 		expect(useLink('not-a-real-token')).toBeNull();
 		// No bot name until the bot has started, so no link can be handed out.

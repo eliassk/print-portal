@@ -15,5 +15,5 @@ export const POST: RequestHandler = async ({ params, cookies }) => {
 	const name = posterFileName(size);
 	const file = await intake([{ name, data: pdf }]);
 	if (!file.ok) return refuse(500, ui.errors.generic);
-	return json({ url: `/?d=${await saveClaimable(file, name)}` });
+	return json({ url: `/?d=${await saveClaimable(file, name, undefined, size === 'a3' ? 'A3' : 'A4')}` });
 };
