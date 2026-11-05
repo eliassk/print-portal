@@ -12,7 +12,7 @@
 			<a href="/admin" class:on={current === 'panel'}>{ui.admin.panel}</a>
 			<a href="/admin/billing" class:on={current === 'billing'}>{ui.admin.billing.nav}</a>
 			<a href="/" class="ext">{ui.admin.portal}</a>
-			<a href="/karta" class="ext">{ui.admin.cardShort}</a>
+			<a href="/admin#plakat" class="ext">{ui.admin.posterNav}</a>
 			<form method="POST" action="/admin?/logout"><button class="link">{ui.admin.logout}</button></form>
 		</nav>
 	</div>

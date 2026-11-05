@@ -15,7 +15,7 @@ type Result = { id: string; pin: string; expires: number; sheets: number; telegr
 export type Pick = { sheets: { name: string; range: string }[]; fit: boolean };
 type Book = { list: { name: string; range: string | null }[]; pick: Pick };
 /** What the server returns for an uploaded or claimed file. */
-type Opened = { draft: string; kind: Kind; items: number; sheets?: Book; name?: string };
+type Opened = { draft: string; kind: Kind; items: number; sheets?: Book; name?: string; size?: PrintOptions['size'] };
 /** `code` is false when the person was signed in by their network and has no code to drop. */
 type Customer = { name: string; code: boolean };
 
@@ -116,6 +116,7 @@ export class Portal {
 	/** Shows a file the server has accepted. A claimed file always starts from its kind's preset. */
 	private open(d: Opened, fresh = d.kind !== this.kind) {
 		if (fresh) this.choose(d.kind);
+		if (d.size) this.opts.size = d.size;
 		this.draft = d.draft;
 		this.items = d.items;
 		if (d.name) this.fileName = d.name;

@@ -24,9 +24,14 @@ const AUTH_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
 // Tokens handed out on the portal, waiting for "/start <token>" in the bot chat.
 const links = new Map<string, { exp: number; customer: number }>();
 let botName = '';
+/** The name people see in Telegram, e.g. "Drukarka Biuro". */
+let botTitle = '';
 
 /** Whether the portal can offer the connect button. */
 export const botReady = () => !!botName;
+
+/** The running bot, or null when there is no token or it has not started yet. */
+export const botInfo = () => (botName ? { username: botName, title: botTitle || botName } : null);
 
 /**
  * A one-time t.me link that authorizes the chat it is opened in for this customer.
@@ -230,7 +235,9 @@ export function startBot() {
 		let offset = 0;
 		while (!botName) {
 			try {
-				botName = (await call<{ username: string }>(token, 'getMe', {})).username;
+				const me = await call<{ username: string; first_name: string }>(token, 'getMe', {});
+				botTitle = me.first_name;
+				botName = me.username;
 			} catch (e) {
 				console.error(e);
 				await new Promise((r) => setTimeout(r, 5000));
