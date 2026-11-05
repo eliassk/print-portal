@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
+import { botInfo } from '$lib/server/telegram';
 import { lookupChat, rememberAdmin } from '$lib/server/telegram';
 import { ADMIN_COOKIE as COOKIE, adminEnabled as enabled, isAdmin } from '$lib/server/admin';
 import { passwordMatches, signAdmin } from '$lib/server/auth';
@@ -56,6 +57,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		settings: db.settings(),
 		today: db.totals(startOfDay(now)),
 		recent: db.recent(30),
+		poster: { url: config.portalUrl, bot: botInfo()?.title ?? (config.telegramToken ? ui.appName : null) },
 		customers: db.customers().map((c) => ({ ...c, state: customerState(c, today(config.timeZone, now)) }))
 	};
 };

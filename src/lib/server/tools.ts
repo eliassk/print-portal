@@ -90,3 +90,36 @@ export function renderPage(pdf: Uint8Array, page: number, dpi = 60): Promise<Uin
 		return new Uint8Array(await readFile(join(dir, 'out.png')));
 	});
 }
+
+/**
+ * Prints an HTML page to PDF with headless Chromium. Null when Chromium is not installed.
+ * Page scripts run first, so drawings that are laid out on load are in the PDF.
+ */
+export function htmlToPdf(html: string): Promise<Uint8Array | null> {
+	return inTemp(async (dir) => {
+		const src = join(dir, 'page.html');
+		const out = join(dir, 'out.pdf');
+		await writeFile(src, html);
+		try {
+			await run(
+				env.CHROMIUM_PATH ?? 'chromium-browser',
+				[
+					'--headless=new',
+					// The container runs as a plain user without the namespaces Chromium's sandbox needs. The page is our own.
+					'--no-sandbox',
+					'--disable-gpu',
+					'--no-pdf-header-footer',
+					'--virtual-time-budget=5000',
+					`--user-data-dir=${join(dir, 'profile')}`,
+					`--print-to-pdf=${out}`,
+					`file://${src}`
+				],
+				{ timeout: 60_000 }
+			);
+		} catch (e) {
+			if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
+			throw e;
+		}
+		return new Uint8Array(await readFile(out));
+	});
+}

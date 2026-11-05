@@ -224,6 +224,22 @@ export const en: typeof pl = {
 		generic: 'Something went wrong. Try again.'
 	},
 	admin: {
+		posters: {
+			title: 'Guide to hang up',
+			hint: 'A poster with this portal\'s address, a QR code and the steps at the printer. "Print" opens it in the portal, ready to send to the printer.',
+			address: 'Address',
+			bot: 'Bot',
+			noBot: 'without Telegram (no bot set up)',
+			a3: 'A3',
+			a3Hint: 'one sheet',
+			a4: 'A4',
+			a4Hint: 'two pages, larger printer pictures',
+			print: 'Print',
+			pdf: 'PDF',
+			preparing: 'Preparing…',
+			noPdf: 'The server has no Chromium, so it cannot make the PDF. Use the preview and print it from the browser.',
+			preview: 'Preview'
+		},
 		connectAdminHint: (hours: number) => `Send it to the person who should become an admin, or open it yourself. It works once, for ${hours} hours. Whoever opens it becomes an admin.`,
 		botOff: 'The Telegram bot is off (no TELEGRAM_BOT_TOKEN).',
 		copyLink: 'Copy',
@@ -260,7 +276,7 @@ export const en: typeof pl = {
 			nothing: 'no prints'
 		},
 		portal: 'Portal',
-		cardShort: 'QR card',
+		posterNav: 'Poster',
 		stats: { prints: 'Prints today', sheets: 'Sheets today', waiting: 'Waiting for PIN', customers: 'Active customers' },
 		colorHint: 'When off, everyone prints in black and white.',
 		dailyHint: 'Counted per phone or computer, resets at midnight.',
@@ -309,21 +325,6 @@ export const en: typeof pl = {
 		noJobs: 'Nothing has been printed today yet.',
 		cols: { time: 'Time', id: 'ID', sheets: 'Sheets', paper: 'Paper', state: 'State' },
 		waiting: 'Waiting for PIN',
-		gone: 'Printed or expired',
-		card: 'QR code card to hang next to the printer'
-	},
-	card: {
-		title: 'Print from your phone or computer',
-		subtitle: 'Scan the QR code or open the address below.',
-		wifiTitle: 'First connect to the building Wi-Fi',
-		wifiBody: 'The app only works on the local network.',
-		scan: 'Scan with your camera',
-		orOpen: 'or open',
-		steps: [
-			{ title: 'Choose a file', body: 'A document or a photo, then set the paper and colour.' },
-			{ title: 'Send to the printer', body: 'The screen shows a job ID and a PIN.' },
-			{ title: 'Pick up at the printer', body: 'Home key → Secure Print, enter the ID and PIN, then Print and Start.' }
-		],
-		privacy: 'Files are not kept. The print waits for the PIN for at most 60 minutes.'
+		gone: 'Printed or expired'
 	}
 };

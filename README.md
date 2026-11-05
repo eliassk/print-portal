@@ -64,7 +64,7 @@ Built for and tested on a **Konica Minolta bizhub C224e**. Other bizhub models t
 - 🧾 **Printer status** over IPP: trays, paper and toner levels, with warnings before a job would stall.
 - 🏢 **Customers.** Each company in the building gets a code with an optional active date range. Only active codes can print or connect Telegram. A customer can also list networks (e.g. an office VLAN) whose people print without a code.
 - 🛠️ **Admin panel** (optional): printer status, colour on or off, daily limits per phone, recent jobs.
-- 📱 **QR card** at `/karta`, an A5 page to print and hang next to the printer.
+- 📱 **Printable guide** in the admin panel: an A3 poster or two A4 pages with the portal's address, a QR code and the steps at the printer. The Telegram part shows the bot's name, or is left out when no bot is set up. Print it or save it as PDF from the print dialog.
 - 💬 **Telegram bot** (optional): forward a file to the bot and get a one-time link that opens the portal with it loaded.
 - 🌐 **English and Polish** interface, set with `PUBLIC_LOCALE`. Strings live in [`src/lib/i18n`](src/lib/i18n); new languages are welcome.
 - 🏠 **LAN only.** Nothing has to be reachable from the internet, HTTPS included.
@@ -80,7 +80,7 @@ cp .env.example .env   # set PRINTER_HOST, LAN_IP, PORTAL_URL; PUBLIC_LOCALE=en 
 docker compose up -d --build
 ```
 
-Open `http://<LAN_IP>`. Print the QR card from `http://<LAN_IP>/karta`.
+Open `http://<LAN_IP>`. Print the guide from the admin panel, under "Plakat".
 
 To update later, run `./scripts/update.sh`. It pulls the latest code and rebuilds, with Caddy when it is set up. The containers restart on their own after a reboot.
 

@@ -38,6 +38,27 @@
 		}
 	}
 
+	let printing = $state('');
+	let posterError = $state('');
+
+	/** Loads the poster into the print portal and opens it in a new tab. */
+	async function printPoster(size: string) {
+		posterError = '';
+		printing = size;
+		// Opened before the wait, so the browser does not treat it as a pop-up.
+		const tab = window.open('', '_blank');
+		try {
+			const { url } = await api<{ url: string }>(`/admin/poster/${size}/print`);
+			if (tab) tab.location.href = url;
+			else location.href = url;
+		} catch (e) {
+			tab?.close();
+			posterError = message(e);
+		} finally {
+			printing = '';
+		}
+	}
+
 	async function copyLink() {
 		if (!adminLink) return;
 		try {
@@ -197,6 +218,29 @@
 					<button class="btn small sec">{ui.admin.add}</button>
 				</form>
 			</details>
+		</section>
+
+		<section class="card posters" id="plakat">
+			<div class="ch"><h2>{ui.admin.posters.title}</h2></div>
+			<p class="muted">{ui.admin.posters.hint}</p>
+			{#if posterError}<p class="err">{posterError}</p>{/if}
+			<p class="facts">
+				<span>{ui.admin.posters.address}: <b>{data.poster.url}</b></span>
+				<span>{ui.admin.posters.bot}: <b class:off={!data.poster.bot}>{data.poster.bot ?? ui.admin.posters.noBot}</b></span>
+			</p>
+			<div class="sizes">
+				{#each [['a3', ui.admin.posters.a3, ui.admin.posters.a3Hint], ['a4', ui.admin.posters.a4, ui.admin.posters.a4Hint]] as [size, name, hint] (size)}
+					<div class="size">
+						<span class="paper" aria-hidden="true">{name}</span>
+						<span class="what"><b>{name}</b><small>{hint}</small></span>
+						<span class="go">
+							<button type="button" class="btn small" disabled={printing === size} onclick={() => printPoster(size)}><Icon name="printer" size={16} />{printing === size ? ui.admin.posters.preparing : ui.admin.posters.print}</button>
+							<a class="btn small sec" href="/admin/poster/{size}/pdf" download><Icon name="upload" size={16} />{ui.admin.posters.pdf}</a>
+							<a class="link" href="/admin/poster/{size}" target="_blank" rel="noopener">{ui.admin.posters.preview}</a>
+						</span>
+					</div>
+				{/each}
+			</div>
 		</section>
 
 		<section class="card customers">
@@ -379,6 +423,7 @@
 		}
 		.stats,
 		.printer,
+		.posters,
 		.customers,
 		.recent {
 			grid-column: 1 / -1;
@@ -578,6 +623,76 @@
 		font-size: 15px;
 	}
 	.set small {
+		color: var(--muted);
+		font-size: 13px;
+	}
+	.facts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 20px;
+		margin: 0;
+		font-size: 14px;
+		color: var(--muted);
+	}
+	.facts b {
+		color: var(--fg);
+		font-weight: 600;
+	}
+	.facts b.off {
+		color: var(--warn);
+		font-weight: 500;
+	}
+	.sizes {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
+	}
+	@media (max-width: 760px) {
+		.sizes {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.size {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: center;
+		gap: 12px 14px;
+		padding: 14px;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+	}
+	.go {
+		grid-column: 1 / -1;
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+	.size .btn {
+		text-decoration: none;
+		white-space: nowrap;
+	}
+	.size .link {
+		text-decoration: none;
+		white-space: nowrap;
+	}
+	.paper {
+		flex: none;
+		width: 30px;
+		height: 42px;
+		border: 1.5px solid var(--line-strong);
+		border-radius: 3px;
+		display: grid;
+		place-items: center;
+		font: 600 11px var(--mono);
+		color: var(--muted);
+		background: var(--surface);
+	}
+	.what {
+		flex: 1;
+		min-width: 0;
+		display: grid;
+	}
+	.what small {
 		color: var(--muted);
 		font-size: 13px;
 	}

@@ -227,6 +227,22 @@ export const pl = {
 		generic: 'Coś poszło nie tak. Spróbuj ponownie.'
 	},
 	admin: {
+		posters: {
+			title: 'Instrukcja do powieszenia',
+			hint: 'Plakat z adresem tego portalu, kodem QR i krokami przy drukarce. „Drukuj” otwiera go w portalu, gotowy do wysłania na drukarkę.',
+			address: 'Adres',
+			bot: 'Bot',
+			noBot: 'bez Telegrama (bot nie jest skonfigurowany)',
+			a3: 'A3',
+			a3Hint: 'jeden arkusz',
+			a4: 'A4',
+			a4Hint: 'dwie strony, większe zdjęcia drukarki',
+			print: 'Drukuj',
+			pdf: 'PDF',
+			preparing: 'Przygotowuję…',
+			noPdf: 'Serwer nie ma Chromium, więc nie może przygotować PDF-a. Użyj podglądu i wydrukuj go z przeglądarki.',
+			preview: 'Podgląd'
+		},
 		connectAdminHint: (hours: number) => `Wyślij go osobie, która ma zostać administratorem, albo otwórz u siebie. Działa raz, przez ${hours} godz. Kto go otworzy, ten zostaje administratorem.`,
 		botOff: 'Bot Telegram jest wyłączony (brak TELEGRAM_BOT_TOKEN).',
 		copyLink: 'Kopiuj',
@@ -263,7 +279,7 @@ export const pl = {
 			nothing: 'brak wydruków'
 		},
 		portal: 'Portal',
-		cardShort: 'Karta QR',
+		posterNav: 'Plakat',
 		stats: { prints: 'Wydruki dziś', sheets: 'Kartki dziś', waiting: 'Czeka na PIN', customers: 'Aktywni klienci' },
 		colorHint: 'Po wyłączeniu wszyscy drukują w czerni i bieli.',
 		dailyHint: 'Liczony na telefon lub komputer, zeruje się o północy.',
@@ -312,21 +328,6 @@ export const pl = {
 		noJobs: 'Dziś jeszcze nic nie wydrukowano.',
 		cols: { time: 'Godz.', id: 'ID', sheets: 'Kartki', paper: 'Papier', state: 'Stan' },
 		waiting: 'Czeka na PIN',
-		gone: 'Wydrukowane lub wygasło',
-		card: 'Karta z kodem QR do powieszenia przy drukarce'
-	},
-	card: {
-		title: 'Drukuj z telefonu lub komputera',
-		subtitle: 'Zeskanuj kod QR albo wejdź na adres poniżej.',
-		wifiTitle: 'Najpierw połącz się z Wi-Fi budynku',
-		wifiBody: 'Aplikacja działa tylko w sieci lokalnej.',
-		scan: 'Zeskanuj aparatem',
-		orOpen: 'albo wejdź na',
-		steps: [
-			{ title: 'Wybierz plik', body: 'Dokument lub zdjęcie, ustaw papier i kolor.' },
-			{ title: 'Wyślij do drukarki', body: 'Na ekranie zobaczysz ID zadania i PIN.' },
-			{ title: 'Odbierz przy drukarce', body: 'Domek → Bezpieczny wydruk, wpisz ID i PIN, potem Drukuj i Start.' }
-		],
-		privacy: 'Pliki nie są przechowywane. Wydruk czeka na PIN najwyżej 60 minut.'
+		gone: 'Wydrukowane lub wygasło'
 	}
 };
