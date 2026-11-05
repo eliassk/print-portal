@@ -237,6 +237,7 @@ export const en: typeof pl = {
 			print: 'Print',
 			pdf: 'PDF',
 			preparing: 'Preparing…',
+			pdfFailed: 'The PDF could not be made. The server log has the details (docker compose logs print-portal).',
 			noPdf: 'The server has no Chromium, so it cannot make the PDF. Use the preview and print it from the browser.',
 			preview: 'Preview'
 		},

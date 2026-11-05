@@ -1,7 +1,15 @@
+# Docker keeps container logs forever by default. Three files of 10 MB per container is plenty.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
 services:
   print-portal:
     build: .
     restart: unless-stopped
+    logging: *logging
     env_file: .env
     environment:
       # The address people open. adapter-node otherwise assumes https and refuses uploads as cross-site.

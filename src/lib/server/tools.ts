@@ -107,19 +107,30 @@ export function htmlToPdf(html: string): Promise<Uint8Array | null> {
 					'--headless=new',
 					// The container runs as a plain user without the namespaces Chromium's sandbox needs. The page is our own.
 					'--no-sandbox',
+					// Docker gives /dev/shm only 64 MB, too little for a page this size.
+					'--disable-dev-shm-usage',
 					'--disable-gpu',
+					'--disable-crash-reporter',
+					'--no-first-run',
 					'--no-pdf-header-footer',
 					'--virtual-time-budget=5000',
 					`--user-data-dir=${join(dir, 'profile')}`,
 					`--print-to-pdf=${out}`,
 					`file://${src}`
 				],
-				{ timeout: 60_000 }
+				// Chromium writes its cache and crash files under HOME; the app user's home is not writable in the image.
+				{ timeout: 90_000, env: { ...process.env, HOME: dir, XDG_CONFIG_HOME: dir, XDG_CACHE_HOME: dir } }
 			);
 		} catch (e) {
 			if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
+			const err = e as { stderr?: string; killed?: boolean };
+			console.error('Chromium failed', err.killed ? '(timed out)' : '', err.stderr?.slice(-2000) ?? e);
 			throw e;
 		}
-		return new Uint8Array(await readFile(out));
+		try {
+			return new Uint8Array(await readFile(out));
+		} catch {
+			throw new Error('Chromium wrote no PDF');
+		}
 	});
 }

@@ -13,4 +13,7 @@ fi
 
 docker compose "${files[@]}" up -d --build
 docker image prune -f >/dev/null
+# Build cache grows with every update (LibreOffice and Chromium layers) until the disk fills up.
+# Only cache older than a week goes, so a quick second update still builds fast.
+docker builder prune -f --filter until=168h >/dev/null
 docker compose "${files[@]}" ps
