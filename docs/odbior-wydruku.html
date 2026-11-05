@@ -162,14 +162,17 @@
 
   .ready { position:relative; flex:1; min-height:0; background:linear-gradient(#90a8ec,#7a95e2); }
   .ready .back { position:absolute; left:2cqw; top:3%; background:linear-gradient(#fff,#d6def3); color:#123; border-radius:2cqw; padding:.3cqw 2cqw; font-size:1.45cqw; }
-  .ready .cap { position:absolute; left:50%; top:6%; font-size:1.1cqw; color:#33467f; }
+  /* The label sits above the dashed preview box, at its left edge. */
+  .ready .cap { position:absolute; left:50%; top:calc(12% - 2.2cqw); width:auto !important; padding:0; font-size:1.4cqw; font-weight:600; color:#14213d; }
   .ready .prev { position:absolute; left:50%; top:12%; width:22%; height:34%; border:.2cqw dashed #4664bf; display:grid; place-items:center; }
-  .ready .prev span { background:linear-gradient(#5d84ea,#3a63cf); border-radius:.5cqw; padding:.5cqw 1cqw; font-weight:700; font-size:1.3cqw; }
-  .ready .dock { position:absolute; left:0; right:0; bottom:0; height:38%; background:linear-gradient(#7f97de,#6c86d4); }
-  .ready .fn { position:absolute; bottom:10%; width:9.5cqw; text-align:center; font-size:1.25cqw; color:#14213d; }
+  .ready .prev span { background:linear-gradient(#f4f8ff,#b9cdf0); color:#14213d; border-radius:.5cqw; padding:.5cqw 1cqw; font-weight:600; font-size:1.3cqw; box-shadow:0 .25cqw 0 rgba(0,0,0,.3); }
+  .ready .dock { position:absolute; left:0; right:0; bottom:0; height:38%; background:linear-gradient(#7f97de,#6c86d4); display:flex; align-items:flex-end; gap:1.4cqw; padding:0 16cqw 1.4cqw 2cqw; }
+  .ready .fn { width:9.5cqw; text-align:center; font-size:1.25cqw; color:#14213d; }
+  /* Colour stands apart on the left; the other settings are grouped. */
+  .ready .fn:first-child { margin-right:auto; }
   .ready .fn i { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:7.6cqw; margin-bottom:.4cqw; background:linear-gradient(#f4f8ff,#b9cdf0); border-radius:.6cqw; box-shadow:0 .25cqw 0 rgba(0,0,0,.3); font-style:normal; font-size:1.3cqw; padding-bottom:.6cqw; }
   .ready .fn i::before { content:none; width:3.4cqw; height:2.6cqw; margin-bottom:.6cqw; border-radius:.3cqw; background:linear-gradient(135deg,#3f86ff,#1446b8); }
-  .ready .app { position:absolute; right:1.6cqw; bottom:6%; background:linear-gradient(#3c62c8,#26479f); color:#fff; border-radius:.5cqw; padding:.5cqw 1.4cqw; font-weight:700; font-size:1.35cqw; }
+  .ready .app { position:absolute; right:1.6cqw; bottom:6%; background:linear-gradient(#f4f8ff,#b9cdf0); color:#14213d; border-radius:.5cqw; padding:.5cqw 1.4cqw; font-weight:700; font-size:1.35cqw; box-shadow:0 .25cqw 0 rgba(0,0,0,.3); }
 
   .copy { position:absolute; inset:0; background:linear-gradient(#2d55ee,#1f43d8); display:flex; flex-direction:column; }
   .copy .area { position:relative; flex:1; min-height:0; }
@@ -183,6 +186,10 @@
   .copy .app { position:absolute; right:1.4cqw; bottom:5%; background:linear-gradient(#5d84ea,#3a63cf); border-radius:.5cqw; padding:.5cqw 1.6cqw; font-weight:700; font-size:1.35cqw; }
   .side i { position:relative; }
   .fn .fi { width:4.4cqw; height:3.3cqw; margin-bottom:.4cqw; }
+  /* Tiles on the print screen are only decoration: small icons, text kept inside the tile. */
+  .ready .fn .fi { width:3cqw; height:2.3cqw; margin-bottom:.5cqw; }
+  .ready .fn i { height:6.2cqw; margin-bottom:.9cqw; font-size:1.05cqw; line-height:1.15; padding:0 .4cqw .7cqw; white-space:nowrap; overflow:hidden; }
+  .ready .fn { font-size:1.05cqw; }
   /* Tips */
   .faq { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
   .faq div { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; }
@@ -448,13 +455,13 @@
           <div class="msgbar">🖨 Aby wydrukować wybrany dokument, naciśnij Start.<br>Aby określić liczbę kopii, użyj klawiatury.<span class="st">Liczba kompl.<br><b style="font-size:3.4cqw;color:#fff">1</b></span></div>
           <div class="ready">
             <div class="back">Wstecz</div>
-            <div class="cap" style="translate:-50% 0;left:61%">Wydruk</div>
+            <div class="cap">Wydruk</div>
             <div class="prev" style="left:50%"><span>Podgląd na ekranie ▸▸</span></div>
             <div class="dock">
-              <div class="fn" style="left:16%"><i><svg viewBox="0 0 24 18" class="fi"><rect x="4" y="1" width="7" height="7" fill="#111"/><rect x="11" y="4" width="7" height="7" fill="#e4007f"/><rect x="5" y="9" width="7" height="7" fill="#00a0e9"/><rect x="12" y="11" width="6" height="6" fill="#ffe100"/></svg>Istniejące ust.kolorów</i>Kolor</div>
-              <div class="fn" style="left:49%"><i><svg viewBox="0 0 24 18" class="fi"><rect x="2" y="2" width="20" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><rect x="4" y="4" width="10" height="7" fill="#3f86ff"/><path d="M15 12l4 2" stroke="#1d2b4f"/></svg>100.0%</i>Zoom</div>
-              <div class="fn" style="left:61.5%"><i><svg viewBox="0 0 24 18" class="fi"><rect x="2" y="2" width="9" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><rect x="13" y="2" width="9" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><text x="5" y="11" font-size="7" fill="#1d2b4f">1</text><text x="16" y="11" font-size="7" fill="#1d2b4f">2</text></svg>Dwustr.</i>Dupleks</div>
-              <div class="fn" style="left:74%"><i><svg viewBox="0 0 24 18" class="fi"><rect x="7" y="1" width="11" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><rect x="4" y="3" width="11" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><text x="7.5" y="12" font-size="7" fill="#1d2b4f">1</text></svg>Układać</i>Wykańczanie</div>
+              <div class="fn"><i><svg viewBox="0 0 24 18" class="fi"><rect x="4" y="1" width="7" height="7" fill="#111"/><rect x="11" y="4" width="7" height="7" fill="#e4007f"/><rect x="5" y="9" width="7" height="7" fill="#00a0e9"/><rect x="12" y="11" width="6" height="6" fill="#ffe100"/></svg>Ust. kolorów</i>Kolor</div>
+              <div class="fn"><i><svg viewBox="0 0 24 18" class="fi"><rect x="2" y="2" width="20" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><rect x="4" y="4" width="10" height="7" fill="#3f86ff"/><path d="M15 12l4 2" stroke="#1d2b4f"/></svg>100.0%</i>Zoom</div>
+              <div class="fn"><i><svg viewBox="0 0 24 18" class="fi"><rect x="2" y="2" width="9" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><rect x="13" y="2" width="9" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><text x="5" y="11" font-size="7" fill="#1d2b4f">1</text><text x="16" y="11" font-size="7" fill="#1d2b4f">2</text></svg>Dwustr.</i>Dupleks</div>
+              <div class="fn"><i><svg viewBox="0 0 24 18" class="fi"><rect x="7" y="1" width="11" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><rect x="4" y="3" width="11" height="13" fill="#fff" stroke="#1d2b4f" stroke-width="1"/><text x="7.5" y="12" font-size="7" fill="#1d2b4f">1</text></svg>Układać</i>Wykańczanie</div>
               <div class="app">Aplikacja</div>
             </div>
           </div>
