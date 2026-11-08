@@ -19,7 +19,7 @@
   <img src="docs/images/options-light.webp" alt="Print settings with a live preview of the page">
 </picture>
 
-People scan a QR code next to the printer, upload a file, check an exact preview and get a **job ID and PIN**. The job waits inside the printer until they type the PIN at the panel, so nobody else walks off with their pages. Files are not kept.
+People scan a QR code next to the printer, upload a file, check an exact preview and get a **job ID and PIN**. The job waits inside the printer until they type the PIN at the panel, so nobody else walks off with their pages. Files stay on the server only while the print is set up, and are deleted once it is sent.
 
 Built for and tested on a **Konica Minolta bizhub C224e**. Other bizhub models that accept PJL secure jobs on port 9100 will likely work; [reports for other models](https://github.com/eliassk/print-portal/issues) are welcome.
 

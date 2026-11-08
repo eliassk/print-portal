@@ -19,11 +19,11 @@ export const en: typeof pl = {
 	printerOff: 'Unavailable',
 	changeFile: 'Change file',
 	privacy: {
-		title: 'Your files are not kept',
+		title: 'What happens to your file',
 		points: (min: number) => [
-			'The file is only used to prepare the print and is not archived anywhere.',
+			'The file stays on the server only while you set up the print. It is deleted as soon as it goes to the printer, or after 30 minutes if you do not send it.',
 			`The printer holds the PIN-protected print for at most ${min} minutes, then deletes it.`,
-			'We do not store file names, their contents or PINs.'
+			'Files and PINs are not archived.'
 		]
 	},
 	secureNote: 'The print waits in the printer behind a PIN. Nobody else can pick it up.',
