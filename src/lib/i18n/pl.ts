@@ -21,11 +21,11 @@ export const pl = {
 	printerOff: 'Niedostępna',
 	changeFile: 'Zmień plik',
 	privacy: {
-		title: 'Twoje pliki nie są przechowywane',
+		title: 'Co dzieje się z Twoim plikiem',
 		points: (min: number) => [
-			'Plik służy tylko do przygotowania wydruku i nie jest nigdzie archiwizowany.',
+			'Plik jest na serwerze tylko na czas ustawiania wydruku. Usuwamy go zaraz po wysłaniu do drukarki, a jeśli go nie wyślesz, po 30 minutach.',
 			`Drukarka trzyma wydruk zabezpieczony PIN-em najwyżej ${min} minut, potem sama go kasuje.`,
-			'Nie zapisujemy nazw plików, ich treści ani PIN-ów.'
+			'Nie archiwizujemy plików ani PIN-ów.'
 		]
 	},
 	secureNote: 'Wydruk czeka w drukarce zabezpieczony PIN-em. Nikt inny go nie odbierze.',
