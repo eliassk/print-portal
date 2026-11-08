@@ -80,7 +80,7 @@ export const actions: Actions = {
 		const n = (k: string, min: number, max: number) => Math.min(max, Math.max(min, Math.round(Number(f.get(k)) || min)));
 		// Admin chats have their own actions, so a stale page never drops a chat that joined meanwhile.
 		const s = getDb().settings();
-		getDb().saveSettings({ ...s, colorAllowed: f.get('colorAllowed') === 'on', dailyPages: n('dailyPages', 1, 1000), maxPages: n('maxPages', 1, 500) });
+		getDb().saveSettings({ ...s, colorAllowed: f.get('colorAllowed') === 'on', customersRequired: f.get('customersRequired') === 'on', dailyPages: n('dailyPages', 1, 1000), maxPages: n('maxPages', 1, 500) });
 		return { saved: true };
 	},
 	addCustomer: async ({ request, cookies }) => {

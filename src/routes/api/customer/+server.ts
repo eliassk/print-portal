@@ -12,9 +12,12 @@ const tries: number[] = [];
 const TRY_LIMIT = 20;
 const TRY_WINDOW_MS = 10 * 60 * 1000;
 
-/** The customer this browser prints for, if any. `code` says whether the person can sign out. */
+/** The customer this browser prints for, if any, and whether one is needed. `code` says whether the person can sign out. */
 export const GET: RequestHandler = async ({ locals, cookies }) =>
-	json({ customer: locals.customer && { name: locals.customer.name, code: cookies.get(COOKIE) === locals.customer.code } });
+	json({
+		customer: locals.customer && { name: locals.customer.name, code: cookies.get(COOKIE) === locals.customer.code },
+		required: getDb().settings().customersRequired
+	});
 
 /** Saves a customer code in this browser. */
 export const POST: RequestHandler = async ({ request, cookies }) => {

@@ -15,7 +15,7 @@
 			<span class="brand"><span class="logo"><Icon name="printer" size={18} /></span>{ui.appName}</span>
 		{/if}
 		<!-- The steps mean nothing until the code is entered. -->
-		{#if p.customer}
+		{#if p.canPrint}
 			<ol class="steps" aria-label={ui.stepsLabel}>
 				{#each SCREENS as s, i (s)}
 					<li class:done={i < at} class:now={s === p.screen}><span>{i + 1}</span>{ui.stepNames[i]}</li>
@@ -26,7 +26,7 @@
 			<span class="chip" class:off={!p.printer.online}><i></i>{ui.printerLabel}: {p.printer.online ? ui.printerOk : ui.printerOff}</span>
 		{/if}
 	</div>
-	{#if p.customer}
+	{#if p.canPrint}
 		<div class="progress" aria-hidden="true">
 			<i style="width: {((at + 1) / SCREENS.length) * 100}%"></i>
 		</div>

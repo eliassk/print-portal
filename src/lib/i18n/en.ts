@@ -315,6 +315,8 @@ export const en: typeof pl = {
 		offline: 'The printer is not responding.',
 		toner: 'Toner',
 		settings: 'Settings',
+		customersRequired: 'Require a customer code',
+		customersRequiredHint: 'When off, anyone on the building network prints without a code. Customers who enter a code or are on their network are still billed.',
 		colorAllowed: 'Colour printing for everyone',
 		dailyPages: 'Daily sheet limit per phone',
 		maxPages: 'Max. pages or photos per print',

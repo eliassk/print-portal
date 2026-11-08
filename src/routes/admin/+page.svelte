@@ -176,6 +176,10 @@
 				<input type="checkbox" class="switch" name="colorAllowed" checked={data.settings.colorAllowed} />
 			</label>
 			<label class="set">
+				<span><b>{ui.admin.customersRequired}</b><small>{ui.admin.customersRequiredHint}</small></span>
+				<input type="checkbox" class="switch" name="customersRequired" checked={data.settings.customersRequired} />
+			</label>
+			<label class="set">
 				<span><b>{ui.admin.dailyPages}</b><small>{ui.admin.dailyHint}</small></span>
 				<input type="number" name="dailyPages" min="1" max="1000" value={data.settings.dailyPages} />
 			</label>

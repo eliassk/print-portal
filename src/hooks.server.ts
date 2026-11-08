@@ -20,7 +20,7 @@ export const init: ServerInit = async () => {
 
 /**
  * Gives each browser a random device id, so daily limits count per phone,
- * and refuses portal calls from people without an active customer.
+ * and, while customers are required, refuses portal calls from people without an active customer.
  */
 export const handle: Handle = async ({ event, resolve }) => {
 	let device = event.cookies.get('device');
@@ -33,6 +33,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.device = device;
 	event.locals.customer = resolveCustomer(getDb().customers(), event.cookies.get('customer'), event.getClientAddress(), today(config.timeZone));
 	const path = event.url.pathname;
-	if (path.startsWith('/api/') && !OPEN_API.has(path) && !event.locals.customer) return json({ error: ui.errors.noCustomer }, { status: 401 });
+	if (path.startsWith('/api/') && !OPEN_API.has(path) && !event.locals.customer && getDb().settings().customersRequired)
+		return json({ error: ui.errors.noCustomer }, { status: 401 });
 	return resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', lang) });
 };

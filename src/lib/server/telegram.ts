@@ -22,7 +22,7 @@ export const AUTH_DAYS = 90;
 const AUTH_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
 
 // Tokens handed out on the portal, waiting for "/start <token>" in the bot chat.
-const links = new Map<string, { exp: number; customer: number }>();
+const links = new Map<string, { exp: number; customer: number | null }>();
 let botName = '';
 /** The name people see in Telegram, e.g. "Drukarka Biuro". */
 let botTitle = '';
@@ -37,7 +37,7 @@ export const botInfo = () => (botName ? { username: botName, title: botTitle || 
  * A one-time t.me link that authorizes the chat it is opened in for this customer.
  * Only the portal hands these out, so only people with an active customer code can get one.
  */
-export function connectLink(customer: number, now = Date.now()): string | null {
+export function connectLink(customer: number | null, now = Date.now()): string | null {
 	if (!botName) return null;
 	for (const [t, l] of links) if (l.exp < now) links.delete(t);
 	if (links.size >= MAX_LINKS) return null;
@@ -68,16 +68,17 @@ function useAdminLink(token: string, now = Date.now()): boolean {
 	return exp !== undefined && exp >= now;
 }
 
-/** Uses up a connect token. Returns its customer when it was valid. */
-export function useLink(token: string, now = Date.now()): number | null {
+/** Uses up a connect token. Returns who it was for when it was valid; the customer is null when customers are off. */
+export function useLink(token: string, now = Date.now()): { customer: number | null } | null {
 	const l = links.get(token);
 	links.delete(token);
-	return l && l.exp >= now ? l.customer : null;
+	return l && l.exp >= now ? { customer: l.customer } : null;
 }
 
-/** A chat may send files while it is connected and its customer is active. */
+/** A chat may send files while it is connected and, when customers are required, its customer is active. */
 export function isAuthorized(chat: number, now = Date.now()): boolean {
 	const db = getDb();
+	if (!db.settings().customersRequired) return db.chatAuthorizedSince(chat, now - AUTH_MS);
 	const id = db.chatCustomer(chat, now - AUTH_MS);
 	const c = id === null ? null : db.customer(id);
 	return !!c && isActive(c, today(config.timeZone, now));
@@ -163,9 +164,9 @@ async function handle(token: string, m: Message) {
 			rememberAdmin(chat, chatName(m.chat), true);
 			return reply(token, chat, `${ui.bot.admin.connected}\n\n${ui.bot.admin.help}`);
 		}
-		const customer = useLink(start[1]);
-		if (customer === null) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
-		getDb().authorizeChat(chat, customer, Date.now());
+		const link = useLink(start[1]);
+		if (!link) return reply(token, chat, ui.bot.linkGone(config.portalUrl));
+		getDb().authorizeChat(chat, link.customer, Date.now());
 		return reply(token, chat, ui.bot.connected(AUTH_DAYS, BOT_DRAFT_TTL_MIN));
 	}
 	if (/^\/stop\b/.test(m.text ?? '')) {
