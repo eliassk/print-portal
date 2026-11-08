@@ -23,6 +23,10 @@ type Customer = { name: string; code: boolean };
 export class Portal {
 	/** Undefined while loading. Nothing else is shown until a customer is known. */
 	customer = $state<Customer | null | undefined>(undefined);
+	/** False when the admin turned customer codes off; then nobody is asked for one. */
+	required = $state(true);
+	/** Whether printing is open: a customer is known, or none is needed. */
+	canPrint = $derived(!!this.customer || (this.customer === null && !this.required));
 	/** A Telegram file link opened before the code was entered. */
 	private pendingClaim: string | null = null;
 	screen = $state<Screen>('start');
@@ -61,7 +65,10 @@ export class Portal {
 			await fn();
 		} catch (e) {
 			// The customer was switched off or its dates ran out while the page was open.
-			if (e instanceof ApiError && e.status === 401) this.customer = null;
+			if (e instanceof ApiError && e.status === 401) {
+				this.customer = null;
+				this.required = true;
+			}
 			this.error = message(e);
 		} finally {
 			this[flag] = false;
@@ -70,7 +77,9 @@ export class Portal {
 
 	async loadCustomer() {
 		try {
-			this.customer = (await api<{ customer: Customer | null }>('/api/customer', { method: 'GET' })).customer;
+			const r = await api<{ customer: Customer | null; required: boolean }>('/api/customer', { method: 'GET' });
+			this.required = r.required;
+			this.customer = r.customer;
 		} catch {
 			this.customer = null;
 		}
@@ -92,7 +101,7 @@ export class Portal {
 
 	private openPendingClaim() {
 		const claim = this.pendingClaim;
-		if (!claim || !this.customer) return;
+		if (!claim || !this.canPrint) return;
 		this.pendingClaim = null;
 		void this.openClaim(claim);
 	}
@@ -136,7 +145,7 @@ export class Portal {
 
 	/** A file sent to the Telegram bot: its link carries a one-time token. */
 	openClaim(claim: string) {
-		if (!this.customer) {
+		if (!this.canPrint) {
 			this.pendingClaim = claim;
 			return;
 		}

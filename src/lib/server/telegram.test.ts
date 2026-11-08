@@ -39,6 +39,14 @@ describe('telegram bot', () => {
 		expect(adminConnectLink()).toBeNull();
 	});
 
+	it('connects a chat without a customer when customer codes are off', () => {
+		const db = openDb(':memory:');
+		db.authorizeChat(9, null, 1000);
+		expect(db.chatAuthorizedSince(9, 500)).toBe(true);
+		expect(db.chatCustomer(9, 500)).toBeNull();
+		expect(db.chatAuthorizedSince(9, 2000)).toBe(false);
+	});
+
 	it('keeps chat authorizations until they expire or are dropped', () => {
 		const db = openDb(':memory:');
 		db.authorizeChat(5, 7, 1000);

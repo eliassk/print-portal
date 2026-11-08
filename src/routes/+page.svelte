@@ -42,7 +42,7 @@
 	<main class="screen-{p.screen}">
 		{#if p.customer === undefined}
 			<!-- Loading the customer. -->
-		{:else if p.customer === null}
+		{:else if !p.canPrint}
 			<CodeScreen portal={p} />
 		{:else if p.screen === 'start'}
 			<StartScreen portal={p} />
@@ -57,7 +57,7 @@
 		{/if}
 
 		<!-- The code screen shows its own error under the field. -->
-		{#if p.error && p.customer !== null}<p class="note bad toast" role="alert"><Icon name="alert" size={18} />{p.error}</p>{/if}
+		{#if p.error && p.canPrint}<p class="note bad toast" role="alert"><Icon name="alert" size={18} />{p.error}</p>{/if}
 	</main>
 </div>
 

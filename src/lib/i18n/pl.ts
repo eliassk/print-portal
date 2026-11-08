@@ -318,6 +318,8 @@ export const pl = {
 		offline: 'Drukarka nie odpowiada.',
 		toner: 'Toner',
 		settings: 'Ustawienia',
+		customersRequired: 'Wymagaj kodu klienta',
+		customersRequiredHint: 'Po wyłączeniu każdy w sieci budynku drukuje bez kodu. Klienci, którzy wpiszą kod albo są w swojej sieci, dalej trafiają do rozliczenia.',
 		colorAllowed: 'Druk w kolorze dla wszystkich',
 		dailyPages: 'Limit kartek dziennie na telefon',
 		maxPages: 'Maks. stron lub zdjęć w jednym wydruku',

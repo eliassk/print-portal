@@ -6,6 +6,8 @@ import type { Customer } from './customers.ts';
 
 export interface Settings {
 	colorAllowed: boolean;
+	/** Off: anyone on the network prints without a code, as before customers existed. */
+	customersRequired: boolean;
 	dailyPages: number;
 	maxPages: number;
 	/** Telegram chats that may run admin commands in the bot. */
@@ -55,7 +57,7 @@ const toCustomer = (r: CustomerRow): Customer => ({
 	id: r.id, name: r.name, code: r.code, enabled: !!r.enabled, activeFrom: r.active_from, activeUntil: r.active_until, networks: r.networks
 });
 
-const DEFAULTS: Settings = { colorAllowed: true, dailyPages: 50, maxPages: 50, adminChats: [], adminNames: {} };
+const DEFAULTS: Settings = { colorAllowed: true, customersRequired: true, dailyPages: 50, maxPages: 50, adminChats: [], adminNames: {} };
 
 /**
  * Jobs, daily counters, settings, customers and authorized Telegram chats. File names and PINs are never stored.
@@ -131,8 +133,8 @@ export function openDb(dir: string | ':memory:') {
 			const r = db.prepare('SELECT COUNT(*) AS jobs, COALESCE(SUM(sheets), 0) AS sheets FROM jobs WHERE at >= ?').get(since) as { jobs: number; sheets: number };
 			return { jobs: Number(r.jobs), sheets: Number(r.sheets) };
 		},
-		/** Lets this Telegram chat send files for a customer. Renews an earlier authorization. */
-		authorizeChat(chat: number, customer: number, now: number) {
+		/** Lets this Telegram chat send files, for a customer when there is one. Renews an earlier authorization. */
+		authorizeChat(chat: number, customer: number | null, now: number) {
 			db.prepare(`INSERT INTO telegram_chats (chat_id, authorized_at, customer_id) VALUES (?, ?, ?)
 				ON CONFLICT(chat_id) DO UPDATE SET authorized_at = excluded.authorized_at, customer_id = excluded.customer_id`).run(chat, now, customer);
 		},
@@ -140,6 +142,9 @@ export function openDb(dir: string | ':memory:') {
 		chatCustomer(chat: number, since: number): number | null {
 			const r = db.prepare('SELECT customer_id FROM telegram_chats WHERE chat_id = ? AND authorized_at >= ?').get(chat, since) as { customer_id: number | null } | undefined;
 			return r?.customer_id ?? null;
+		},
+		chatAuthorizedSince(chat: number, since: number): boolean {
+			return !!db.prepare('SELECT 1 FROM telegram_chats WHERE chat_id = ? AND authorized_at >= ?').get(chat, since);
 		},
 		/** Restarts the clock for a chat that is still connected. A disconnected chat stays out. */
 		renewChat(chat: number, now: number) {

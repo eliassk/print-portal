@@ -3,7 +3,7 @@ import { openDb } from './db.ts';
 import { checkJob, startOfDay } from './limits.ts';
 
 const now = new Date(2026, 10, 2, 14, 0).getTime();
-const s = { colorAllowed: true, dailyPages: 10, maxPages: 50, adminChats: [], adminNames: {} };
+const s = { colorAllowed: true, customersRequired: true, dailyPages: 10, maxPages: 50, adminChats: [], adminNames: {} };
 const job = (db: ReturnType<typeof openDb>, at: number, sheets: number, device = 'a') =>
 	db.addJob({ at, jobId: String(1000 + at % 9000), device, sheets, size: 'A4', paper: 'plain', color: 'mono', expires: at + 3600_000 });
 
@@ -36,7 +36,7 @@ describe('checkJob', () => {
 describe('settings', () => {
 	it('round-trips', () => {
 		const db = openDb(':memory:');
-		db.saveSettings({ colorAllowed: false, dailyPages: 20, maxPages: 30, adminChats: [42, -100], adminNames: { 42: 'Ola @ola' } });
-		expect(db.settings()).toEqual({ colorAllowed: false, dailyPages: 20, maxPages: 30, adminChats: [42, -100], adminNames: { 42: 'Ola @ola' } });
+		db.saveSettings({ colorAllowed: false, customersRequired: false, dailyPages: 20, maxPages: 30, adminChats: [42, -100], adminNames: { 42: 'Ola @ola' } });
+		expect(db.settings()).toEqual({ colorAllowed: false, customersRequired: false, dailyPages: 20, maxPages: 30, adminChats: [42, -100], adminNames: { 42: 'Ola @ola' } });
 	});
 });
