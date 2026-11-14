@@ -45,7 +45,7 @@ export type Kind = 'doc' | 'photo';
 
 export const PRESETS = {
 	doc: { copies: 1, range: '', size: 'A4', color: 'color', duplex: 'long', nup: 1, fit: 'fit', orientation: 'auto', margin: 5, paper: 'plain' },
-	photo: { copies: 1, range: '', size: 'A4', color: 'color', duplex: 'off', nup: 1, fit: 'fit', orientation: 'auto', margin: 5, paper: 'thick1p' }
+	photo: { copies: 1, range: '', size: 'A4', color: 'color', duplex: 'off', nup: 1, fit: 'fit', orientation: 'auto', margin: 5, paper: 'plain' }
 } as const satisfies Record<Kind, PrintOptions>;
 export const MARGINS = [5, 10, 15, 20] as const;
 

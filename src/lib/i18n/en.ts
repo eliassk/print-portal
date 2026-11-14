@@ -79,7 +79,7 @@ export const en: typeof pl = {
 	colorOptions: { mono: 'Black and white', color: 'Colour' },
 	colorOff: 'Colour printing is turned off right now.',
 	duplex: 'Double-sided',
-	duplexOptions: { off: 'No', long: 'Book', short: 'Calendar' },
+	duplexOptions: { off: 'One-sided', long: 'Two-sided (book)', short: 'Two-sided (calendar)' },
 	duplexHint: {
 		off: 'We print on one side of the sheet only.',
 		long: 'Both sides, the sheet turns sideways like a book.',

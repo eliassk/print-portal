@@ -81,7 +81,7 @@ export const pl = {
 	colorOptions: { mono: 'Czarno-biały', color: 'Kolor' },
 	colorOff: 'Druk w kolorze jest teraz wyłączony.',
 	duplex: 'Druk dwustronny',
-	duplexOptions: { off: 'Nie', long: 'Książka', short: 'Kalendarz' },
+	duplexOptions: { off: 'Jednostronnie', long: 'Dwustronnie (książka)', short: 'Dwustronnie (kalendarz)' },
 	duplexHint: {
 		off: 'Drukujemy tylko na jednej stronie kartki.',
 		long: 'Obie strony, kartkę przewraca się na bok jak w książce.',
